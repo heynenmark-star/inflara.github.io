@@ -1,251 +1,160 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Inflara</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
-    }
-
-    body {
-      background: radial-gradient(circle at top, #1b1f3b, #090b1a);
-      color: #fff;
-      min-height: 100vh;
-    }
-
-    /* Header */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 24px 60px;
-    }
-
-    header h1 {
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
-
-    nav a {
-      color: #bbb;
-      text-decoration: none;
-      margin-left: 25px;
-      transition: color 0.3s;
-    }
-
-    nav a:hover {
-      color: #fff;
-    }
-
-    /* Hero */
-    .hero {
-      text-align: center;
-      padding: 100px 20px 80px;
-    }
-
-    .hero h2 {
-      font-size: 52px;
-      font-weight: 700;
-      background: linear-gradient(90deg, #6cf, #9f7aea);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero p {
-      max-width: 600px;
-      margin: 20px auto;
-      font-size: 18px;
-      color: #ccc;
-    }
-
-    .hero button {
-      margin-top: 30px;
-      padding: 14px 32px;
-      border-radius: 30px;
-      border: none;
-      font-size: 16px;
-      background: linear-gradient(90deg, #6cf, #9f7aea);
-      color: #000;
-      cursor: pointer;
-    }
-
-    /* Price Cards */
-    .prices {
-      display: flex;
-      justify-content: center;
-      gap: 25px;
-      padding: 60px 20px;
-      flex-wrap: wrap;
-    }
-
-    .card {
-      width: 240px;
-      padding: 25px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(15px);
-      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-      transition: transform 0.3s;
-    }
-
-    .card:hover {
-      transform: translateY(-8px);
-    }
-
-    .card h3 {
-      font-size: 20px;
-      margin-bottom: 10px;
-    }
-
-    .card span {
-      font-size: 14px;
-      color: #aaa;
-    }
-
-    .price {
-      font-size: 28px;
-      font-weight: 600;
-      margin-top: 10px;
-    }
-
-    /* About */
-    .about {
-      text-align: center;
-      padding: 80px 20px;
-      max-width: 800px;
-      margin: auto;
-    }
-
-    .about h2 {
-      font-size: 36px;
-      margin-bottom: 20px;
-    }
-
-    .about p {
-      font-size: 17px;
-      color: #ccc;
-      line-height: 1.6;
-    }
-
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 40px 20px;
-      font-size: 14px;
-      color: #777;
-    }
-
-    @media (max-width: 768px) {
-      header {
-        padding: 20px;
-      }
-
-      .hero h2 {
-        font-size: 38px;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
 
-<header>
-  <h1>⚡ Inflara</h1>
-  <nav>
-    <a href="#">Home</a>
-    <a href="#">Markets</a>
-    <a href="#">About</a>
-    <a href="#">Contact</a>
-  </nav>
-</header>
+  <!-- HERO -->
+  <section class="hero">
+    <img src="inflara-symbol.png" alt="Inflara Symbol" class="logo" />
+    <h1>Inflara</h1>
+    <p class="subtitle">
+      A measurement-driven monetary protocol designed to preserve purchasing power.
+    </p>
+    <p class="intro">
+      Inflara is a rule-based system that responds to real-world inflation mechanically,
+      without discretion, leverage, or speculative incentives.
+    </p>
+  </section>
 
-<section class="hero">
-  <h2>Powering the Future of Finance</h2>
-  <p>
-    Inflara tracks real-time crypto data, market trends, and blockchain innovation
-    — fast, secure, and transparent.
-  </p>
-  <button>Explore Markets</button>
-</section>
+  <!-- PROBLEM -->
+  <section class="section">
+    <h2>The Problem</h2>
+    <p>
+      Modern monetary systems erode savings through discretionary expansion and opaque
+      decision-making. Inflation is measured after the fact, while responses are political,
+      delayed, or unevenly applied.
+    </p>
+    <p>
+      Savers bear the cost. Risk is rewarded. Trust decays.
+    </p>
+    <p>
+      Most digital assets replicate this instability in new forms, replacing discretion
+      with volatility rather than removing it.
+    </p>
+  </section>
 
-<section class="prices">
+  <!-- HOW IT WORKS -->
+  <section class="section">
+    <h2>How Inflara Works</h2>
 
-  <!-- Bitcoin -->
-  <a href="https://www.tradingview.com/symbols/BTCUSD/" target="_blank" class="card-link">
-    <div class="card">
-      <h3>Bitcoin</h3>
-      <span>BTC</span>
-      <div class="price" id="btc-price">Loading…</div>
-
-      <!-- TradingView mini chart -->
-      <iframe
-        src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?symbol=BITSTAMP%3ABTCUSD&locale=en&dateRange=1M&colorTheme=dark"
-        width="100%"
-        height="150"
-        frameborder="0"
-        allowtransparency="true">
-      </iframe>
+    <div class="diagram">
+      <img src="inflara-diagram.png" alt="Inflara System Diagram" />
     </div>
-  </a>
 
-  <!-- Gold -->
-  <a href="https://www.tradingview.com/symbols/XAUUSD/" target="_blank" class="card-link">
-    <div class="card">
-      <h3>Gold</h3>
-      <span>XAU (per oz)</span>
-      <div class="price" id="gold-price">Loading…</div>
-
-      <iframe
-        src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?symbol=OANDA%3AXAUUSD&locale=en&dateRange=1M&colorTheme=dark"
-        width="100%"
-        height="150"
-        frameborder="0"
-        allowtransparency="true">
-      </iframe>
+    <div class="columns">
+      <div class="column">
+        <h3>Measurement</h3>
+        <p>
+          Verified price signals and monetary references are observed over time.
+        </p>
+      </div>
+      <div class="column">
+        <h3>Black Box Rules</h3>
+        <p>
+          A deterministic rule engine processes inputs within predefined limits.
+          No discretion. No overrides. No retroactive action.
+        </p>
+      </div>
+      <div class="column">
+        <h3>Constrained Output</h3>
+        <p>
+          Responses are bounded, gradual, and designed to preserve stability rather
+          than chase performance.
+        </p>
+      </div>
     </div>
-  </a>
 
-  <!-- Silver -->
-  <a href="https://www.tradingview.com/symbols/XAGUSD/" target="_blank" class="card-link">
-    <div class="card">
-      <h3>Silver</h3>
-      <span>XAG (per oz)</span>
-      <div class="price" id="silver-price">Loading…</div>
+    <p class="note">
+      When inputs are noisy or uncertain, the system defaults to inaction.
+    </p>
+  </section>
 
-      <iframe
-        src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?symbol=OANDA%3AXAGUSD&locale=en&dateRange=1M&colorTheme=dark"
-        width="100%"
-        height="150"
-        frameborder="0"
-        allowtransparency="true">
-      </iframe>
-    </div>
-  </a>
+  <!-- SAVER PROTECTION -->
+  <section class="section">
+    <h2>Saver Protection</h2>
+    <p>
+      Inflara is designed with savers as the primary stakeholder.
+    </p>
+    <p>
+      At its core, the protocol seeks to preserve purchasing power by responding to
+      measured inflation within predefined bands and caps. No guarantees of real yield
+      are made.
+    </p>
 
-</section>
+    <h3>Optional Reference Profiles (Phase 3)</h3>
+    <ul>
+      <li>Bitcoin — digital scarcity reference</li>
+      <li>Gold — monetary commodity reference</li>
+      <li>Silver — secondary monetary commodity reference</li>
+    </ul>
 
-  <section class="about">
-  <h2>Why Inflara?</h2>
-  <p>
-    Built for investors, developers, and crypto enthusiasts.
-    Inflara delivers clean insights, inflation-aware metrics,
-    and real-world asset-backed crypto intelligence.
-  </p>
-</section>
+    <p>
+      These profiles are opt-in, apply at the account level only, and use partial
+      weighting with strict caps and smoothing.
+    </p>
+  </section>
 
-<footer>
-  © 2026 Inflara. All rights reserved.
+  <!-- MEASUREMENT REFERENCES -->
+  <section class="section muted">
+    <h2>Measurement References</h2>
+    <ul class="prices">
+      <li>Bitcoin price (read-only)</li>
+      <li>Gold price (read-only)</li>
+      <li>Silver price (read-only)</li>
+    </ul>
+    <p class="note">
+      References are used for measurement and contextual calibration only.
+      Inflara does not custody or hold external assets.
+    </p>
+  </section>
+
+  <!-- PHASES -->
+  <section class="section">
+    <h2>Phased Activation</h2>
+    <ul class="phases">
+      <li><strong>Phase 1:</strong> Measurement</li>
+      <li><strong>Phase 2:</strong> Constrained Response</li>
+      <li><strong>Phase 3:</strong> Saver Protection</li>
+      <li class="future">Later Phases: Additional interfaces and emergency logic</li>
+    </ul>
+  </section>
+
+  <!-- WHAT IT IS NOT -->
+  <section class="section muted">
+    <h2>What Inflara Is Not</h2>
+    <ul>
+      <li>Not a lending protocol</li>
+      <li>Not a yield product</li>
+      <li>Not discretionary monetary policy</li>
+      <li>Not designed for speculation</li>
+    </ul>
+  </section>
+
+  <!-- WHITE PAPER -->
+  <section class="section center">
+    <h2>White Paper</h2>
+    <p>
+      The full specification, design rationale, and constraints are detailed in the
+      Inflara White Paper.
+    </p>
+    <a href="inflara-whitepaper.pdf" class="button">Read the White Paper</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>
+      Inflara is an open, rule-based monetary protocol designed to be auditable,
+      constrained, and resistant to misuse.
+    </p>
+  </footer>
+
+</body>
+</html>ra. All rights reserved.
 </footer>
 
 </body>
