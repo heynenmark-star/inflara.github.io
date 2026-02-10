@@ -93,11 +93,19 @@ h3 {
   font-size: 0.9rem;
 }
 
-.prices,
-.phases {
-  list-style: none;
-  padding-left: 0;
+.prices a {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-decoration: none;
+  opacity: 0.8;
 }
+
+.prices a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 
 .phases .future {
   color: var(--muted);
