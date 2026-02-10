@@ -1,3 +1,4 @@
+// Fade-in observer
 document.addEventListener("DOMContentLoaded", () => {
   const elements = document.querySelectorAll(".fade-in");
 
@@ -6,44 +7,55 @@ document.addEventListener("DOMContentLoaded", () => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
         }
       });
     },
-    {
-      threshold: 0.15
-    }
+    { threshold: 0.15 }
   );
 
   elements.forEach(el => observer.observe(el));
 });
 
-async function fetchPrices() {
+// -------- PRICE FETCHING --------
+
+async function fetchBitcoin() {
   try {
-    const btcRes = await fetch(
+    const res = await fetch(
       "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
     );
-    const btcData = await btcRes.json();
+    const data = await res.json();
     document.getElementById("btc-price").textContent =
-      "$" + btcData.bitcoin.usd.toLocaleString();
-
-    const metalsRes = await fetch("https://api.metals.live/v1/spot");
-    const metalsData = await metalsRes.json();
-
-    const gold = metalsData.find(m => m[0] === "gold");
-    const silver = metalsData.find(m => m[0] === "silver");
-
-    if (gold) {
-      document.getElementById("gold-price").textContent =
-        "$" + gold[1].toFixed(2) + " / oz";
-    }
-
-    if (silver) {
-      document.getElementById("silver-price").textContent =
-        "$" + silver[1].toFixed(2) + " / oz";
-    }
-  } catch (err) {
-    console.warn("Price fetch failed:", err);
+      "$" + data.bitcoin.usd.toLocaleString();
+  } catch {
+    document.getElementById("btc-price").textContent = "Unavailable";
   }
 }
 
-fetchPrices();
+async function fetchMetals() {
+  try {
+    const goldRes = await fetch("https://api.gold-api.com/price/XAU");
+    const goldData = await goldRes.json();
+    document.getElementById("gold-price").textContent =
+      "$" + goldData.price.toFixed(2) + " / oz";
+
+    const silverRes = await fetch("https://api.gold-api.com/price/XAG");
+    const silverData = await silverRes.json();
+    document.getElementById("silver-price").textContent =
+      "$" + silverData.price.toFixed(2) + " / oz";
+  } catch {
+    document.getElementById("gold-price").textContent = "Unavailable";
+    document.getElementById("silver-price").textContent = "Unavailable";
+  }
+}
+
+// Initial load
+fetchBitcoin();
+fetchMetals();
+
+// Refresh every 10 minutes
+setInterval(() => {
+  fetchBitcoin();
+  fetchMetals();
+}, 600000);
+
