@@ -9,7 +9,7 @@
 <body>
 
   <!-- HERO -->
-  <section class="hero">
+  <section class="hero fade-in">
     <img src="inflara-symbol.png" alt="Inflara Symbol" class="logo" />
     <h1>Inflara</h1>
     <p class="subtitle">
@@ -22,28 +22,22 @@
   </section>
 
   <!-- PROBLEM -->
-  <section class="section">
-    <section class="hero fade-in">
-    <section class="section fade-in">
+  <section class="section fade-in">
     <h2>The Problem</h2>
     <p>
       Modern monetary systems erode savings through discretionary expansion and opaque
-      decision-making. Inflation is measured after the fact, while responses are political,
-      delayed, or unevenly applied.
+      decision-making.
     </p>
     <p>
       Savers bear the cost. Risk is rewarded. Trust decays.
     </p>
     <p>
-      Most digital assets replicate this instability in new forms, replacing discretion
-      with volatility rather than removing it.
+      Most digital assets replicate this instability in new forms.
     </p>
   </section>
 
   <!-- HOW IT WORKS -->
-  <section class="section">
-    <section class="hero fade-in">
-    <section class="section fade-in">
+  <section class="section fade-in">
     <h2>How Inflara Works</h2>
 
     <div class="diagram">
@@ -53,23 +47,15 @@
     <div class="columns">
       <div class="column">
         <h3>Measurement</h3>
-        <p>
-          Verified price signals and monetary references are observed over time.
-        </p>
+        <p>Verified price signals and monetary references are observed over time.</p>
       </div>
       <div class="column">
         <h3>Black Box Rules</h3>
-        <p>
-          A deterministic rule engine processes inputs within predefined limits.
-          No discretion. No overrides. No retroactive action.
-        </p>
+        <p>Deterministic rules. No discretion. No overrides.</p>
       </div>
       <div class="column">
         <h3>Constrained Output</h3>
-        <p>
-          Responses are bounded, gradual, and designed to preserve stability rather
-          than chase performance.
-        </p>
+        <p>Bounded, gradual responses designed for stability.</p>
       </div>
     </div>
 
@@ -79,16 +65,9 @@
   </section>
 
   <!-- SAVER PROTECTION -->
-  <section class="section">
+  <section class="section fade-in">
     <h2>Saver Protection</h2>
-    <p>
-      Inflara is designed with savers as the primary stakeholder.
-    </p>
-    <p>
-      At its core, the protocol seeks to preserve purchasing power by responding to
-      measured inflation within predefined bands and caps. No guarantees of real yield
-      are made.
-    </p>
+    <p>Inflara is designed with savers as the primary stakeholder.</p>
 
     <h3>Optional Reference Profiles (Phase 3)</h3>
     <ul>
@@ -96,71 +75,61 @@
       <li>Gold — monetary commodity reference</li>
       <li>Silver — secondary monetary commodity reference</li>
     </ul>
+  </section>
 
-    <p>
-      These profiles are opt-in, apply at the account level only, and use partial
-      weighting with strict caps and smoothing.
+  <!-- MEASUREMENT REFERENCES -->
+  <section class="section muted fade-in">
+    <h2>Measurement References</h2>
+
+    <ul class="prices">
+      <li>Bitcoin: <span id="btc-price">—</span></li>
+      <li>Gold: <span id="gold-price">—</span></li>
+      <li>Silver: <span id="silver-price">—</span></li>
+    </ul>
+
+    <p class="note">
+      References are read-only and used for contextual calibration only.
     </p>
   </section>
 
-  <section class="section muted fade-in">
-  <h2>Measurement References</h2>
-
-  <ul class="prices">
-    <li>Bitcoin: <span id="btc-price">—</span></li>
-    <li>Gold: <span id="gold-price">—</span></li>
-    <li>Silver: <span id="silver-price">—</span></li>
-  </ul>
-
-  <p class="note">
-    References are read-only and used for measurement and contextual calibration only.
-    Inflara does not custody or hold external assets.
-  </p>
-</section>
-
   <!-- PHASES -->
-  <section class="section">
+  <section class="section fade-in">
     <h2>Phased Activation</h2>
     <ul class="phases">
       <li><strong>Phase 1:</strong> Measurement</li>
       <li><strong>Phase 2:</strong> Constrained Response</li>
       <li><strong>Phase 3:</strong> Saver Protection</li>
-      <li class="future">Later Phases: Additional interfaces and emergency logic</li>
     </ul>
   </section>
 
   <!-- WHAT IT IS NOT -->
-  <section class="section muted">
+  <section class="section muted fade-in">
     <h2>What Inflara Is Not</h2>
     <ul>
       <li>Not a lending protocol</li>
       <li>Not a yield product</li>
-      <li>Not discretionary monetary policy</li>
+      <li>Not discretionary policy</li>
       <li>Not designed for speculation</li>
     </ul>
   </section>
 
   <!-- WHITE PAPER -->
-  <section class="section center">
+  <section class="section center fade-in">
     <h2>White Paper</h2>
-    <p>
-      The full specification, design rationale, and constraints are detailed in the
-      Inflara White Paper.
-    </p>
     <a href="inflara-whitepaper.pdf" class="button">Read the White Paper</a>
   </section>
 
   <!-- FOOTER -->
   <footer>
     <p>
-      Inflara is an open, rule-based monetary protocol designed to be auditable,
-      constrained, and resistant to misuse.
+      Inflara is an open, rule-based monetary protocol designed to be auditable and constrained.
     </p>
   </footer>
-<script src="script.js"></script>
 
+  <script src="script.js"></script>
 </body>
-</html>ra. All rights reserved.
+</html>
+
 </footer>
 <script src="script.js"></script>
 </body>
