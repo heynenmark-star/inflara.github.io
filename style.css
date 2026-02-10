@@ -37,19 +37,17 @@ section {
   padding: 4rem 1.5rem;
 }
 
+.hero .logo {
+  display: block !important;
+  margin: 0 auto 0.75rem !important;
+  width: 40px !important;
+  max-width: 40px !important;
+  height: auto !important;
+}
 .hero {
-  max-width: none;
+  text-align: center;
 }
 
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 1rem;   /* centers it */
-  max-width: 44px;       /* smaller size */
-  height: auto;
-  opacity: 0.8;
-}
 
 
 h1 {
