@@ -8,14 +8,6 @@
 * {
   box-sizing: border-box;
 }
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg);
-  color: var(--fg);
-  line-height: 1.6;
-}
 #starfield {
   position: fixed;
   top: 0;
@@ -25,6 +17,18 @@ body {
   z-index: -1;
   background: linear-gradient(to bottom, #0b0f18, #0e1117);
 }
+body {
+  position: relative;
+  z-index: 1;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.6;
+ }
 
 /* Fade-in animation */
 .fade-in {
