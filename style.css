@@ -16,6 +16,15 @@ body {
   color: var(--fg);
   line-height: 1.6;
 }
+#starfield {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: linear-gradient(to bottom, #0b0f18, #0e1117);
+}
 
 /* Fade-in animation */
 .fade-in {
