@@ -46,7 +46,6 @@ function createStars() {
   }
 }
 const RPC = "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_";
-
 const INFL = "0x393289f921bbE6A684B79B9939816AAE68AC1B60";
 const CONTROLLER = "0x30481Cc7D7A0F437dec661e36b0a5394F74bBe62";
 
