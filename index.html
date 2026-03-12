@@ -3,23 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title></title>
+  <title>Inflara | A Fair Crypto Currency</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-<canvas id="starfield"></canvas>
-  <h2>Inflara Dashboard</h2>
-
-<div id="dashboard">
-
-<p>Circulating Supply: <span id="supply">loading...</span></p>
-<p>CPI: <span id="cpi">loading...</span></p>
-<p>Epoch Emissions: <span id="emissions">loading...</span></p>
-
-<button onclick="loadDashboard()">Refresh Data</button>
-
-</div>
+  <canvas id="starfield"></canvas>
 
   <!-- HERO -->
   <section class="hero fade-in">
@@ -32,6 +21,17 @@
       Inflara is a rule-based system that responds to real-world inflation mechanically,
       without discretion, leverage, or speculative incentives.
     </p>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="section fade-in">
+    <h2>Inflara Dashboard</h2>
+    <div id="dashboard" class="dashboard-box">
+      <p>Circulating Supply: <span id="supply">loading...</span></p>
+      <p>CPI: <span id="cpi">loading...</span></p>
+      <p>Epoch Emissions: <span id="emissions">loading...</span></p>
+      <button onclick="loadDashboard()">Refresh Data</button>
+    </div>
   </section>
 
   <!-- PROBLEM -->
@@ -52,13 +52,13 @@
   <!-- HOW IT WORKS -->
   <section class="section fade-in">
     <h2>How Inflara Works</h2>
-<div class="diagram fade-in">
-  <img
-    src="System image.png"
-    alt="Inflara system architecture diagram showing measurement inputs, rule engine, and constrained outputs"
-  />
-</div>
 
+    <div class="diagram fade-in">
+      <img
+        src="System image.png"
+        alt="Inflara system architecture diagram showing measurement inputs, rule engine, and constrained outputs"
+      />
+    </div>
 
     <div class="columns">
       <div class="column">
@@ -98,26 +98,25 @@
     <h2>Measurement References</h2>
 
     <ul class="prices">
-  <li>
-    Bitcoin: <span id="btc-price">—</span>
-    <a href="https://www.tradingview.com/symbols/BTCUSD/" target="_blank" rel="noopener">
-      view
-    </a>
-  </li>
-  <li>
-    Gold:
-    <a href="https://www.tradingview.com/symbols/TVC-GOLD/" target="_blank" rel="noopener">
-      TradingView
-    </a>
-  </li>
-  <li>
-    Silver:
-    <a href="https://www.tradingview.com/symbols/TVC-SILVER/" target="_blank" rel="noopener">
-      TradingView
-    </a>
-  </li>
-</ul>
-
+      <li>
+        Bitcoin: <span id="btc-price">—</span>
+        <a href="https://www.tradingview.com/symbols/BTCUSD/" target="_blank" rel="noopener">
+          view
+        </a>
+      </li>
+      <li>
+        Gold:
+        <a href="https://www.tradingview.com/symbols/TVC-GOLD/" target="_blank" rel="noopener">
+          TradingView
+        </a>
+      </li>
+      <li>
+        Silver:
+        <a href="https://www.tradingview.com/symbols/TVC-SILVER/" target="_blank" rel="noopener">
+          TradingView
+        </a>
+      </li>
+    </ul>
 
     <p class="note">
       References are read-only and used for contextual calibration only.
