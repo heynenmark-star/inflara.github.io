@@ -38,7 +38,31 @@ body {
     opacity 0.9s ease-out,
     transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
 }
+.dashboard-box {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  background: rgba(10, 15, 30, 0.65);
+  backdrop-filter: blur(4px);
+}
 
+.dashboard-box p {
+  font-size: 1.1rem;
+  margin: 0.8rem 0;
+}
+
+.dashboard-box button {
+  margin-top: 1rem;
+  padding: 0.7rem 1.1rem;
+  border: none;
+  border-radius: 10px;
+  background: white;
+  color: black;
+  cursor: pointer;
+  font-weight: 600;
+}
 
 .fade-in.visible {
   opacity: 1;
