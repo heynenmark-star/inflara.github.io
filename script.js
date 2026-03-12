@@ -45,7 +45,39 @@ function createStars() {
     });
   }
 }
+const RPC = "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_";
 
+const INFL = "0x393289f921bbE6A684B79B9939816AAE68AC1B60";
+const CONTROLLER = "0x30481Cc7D7A0F437dec661e36b0a5394F74bBe62";
+
+const tokenABI = [
+ "function totalSupply() view returns (uint256)"
+];
+
+const controllerABI = [
+ "function currentCPIBps() view returns (uint256)"
+];
+
+async function loadDashboard() {
+
+const provider = new ethers.JsonRpcProvider(RPC);
+
+const token = new ethers.Contract(INFL, tokenABI, provider);
+const controller = new ethers.Contract(CONTROLLER, controllerABI, provider);
+
+const supply = await token.totalSupply();
+const cpi = await controller.currentCPIBps();
+
+document.getElementById("supply").innerText =
+Number(ethers.formatUnits(supply,18)).toLocaleString();
+
+document.getElementById("cpi").innerText =
+(cpi/100).toFixed(2) + "%";
+
+document.getElementById("emissions").innerText =
+"Dynamic (CPI based)";
+
+}
 function drawStars() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
