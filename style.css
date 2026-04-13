@@ -92,22 +92,6 @@
 }
 .logo {
   width: 180px;
-  height: auto;
-  display: block;
-  margin: 0 auto 20px;
-
-  /* Blend effect */
-  opacity: 0.9;
-  mix-blend-mode: screen;
-
-  /* Remove hard edges */
-  filter: brightness(1.1) contrast(1.05);
-
-  /* Glow */
-  box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
-}
-.logo {
-  width: 180px;
   margin-bottom: 20px;
 
   opacity: 0.95;
