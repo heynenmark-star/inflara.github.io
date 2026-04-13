@@ -10,6 +10,7 @@
 <body>
   <canvas id="starfield"></canvas>
 
+  <!-- NAVIGATION -->
   <header class="topbar">
     <div class="nav-brand">
       <a href="index.html">INFLARA</a>
@@ -27,26 +28,31 @@
     </nav>
   </header>
 
-  <section class="hero fade-in macro-hero">
+  <!-- HERO -->
+  <section class="hero macro-hero fade-in">
     <h1>Macro Dashboard</h1>
-    <p class="subtitle">Money supply growth and inflation, visualised over time.</p>
+    <p class="subtitle">
+      Money supply growth and inflation visualised over time.
+    </p>
     <p class="intro">
-      This dashboard compares broad monetary expansion with consumer inflation.
+      Explore the relationship between monetary expansion and consumer inflation
+      through official macroeconomic data.
     </p>
   </section>
 
+  <!-- DASHBOARD -->
   <section class="section fade-in">
     <div class="macro-toolbar">
       <div class="macro-tabs">
-        <button class="macro-tab active" id="region-ea">Euro Area</button>
-        <button class="macro-tab" id="region-us">US</button>
+        <button class="macro-tab active" id="region-ea" type="button">Euro Area</button>
+        <button class="macro-tab" id="region-us" type="button">US</button>
       </div>
 
       <div class="macro-ranges">
-        <button class="range-btn active" data-years="5">5Y</button>
-        <button class="range-btn" data-years="10">10Y</button>
-        <button class="range-btn" data-years="20">20Y</button>
-        <button class="range-btn" data-years="0">Max</button>
+        <button class="range-btn active" data-years="5" type="button">5Y</button>
+        <button class="range-btn" data-years="10" type="button">10Y</button>
+        <button class="range-btn" data-years="20" type="button">20Y</button>
+        <button class="range-btn" data-years="0" type="button">Max</button>
       </div>
     </div>
 
@@ -56,17 +62,20 @@
 
     <div class="columns macro-cards">
       <div class="column">
-        <h3>Latest CPI / HICP</h3>
+        <h3>Latest Inflation</h3>
         <p id="card-inflation">Loading...</p>
       </div>
+
       <div class="column">
         <h3>Latest M1</h3>
         <p id="card-m1">Loading...</p>
       </div>
+
       <div class="column">
         <h3>Latest M2</h3>
         <p id="card-m2">Loading...</p>
       </div>
+
       <div class="column">
         <h3>Latest M3</h3>
         <p id="card-m3">Loading...</p>
@@ -74,9 +83,59 @@
     </div>
 
     <p class="note" id="macro-note">
-      Euro Area mode uses ECB monetary aggregates and HICP inflation. US mode can show M1, M2 and CPI, but official US M3 is discontinued.
+      Macro data will appear here once the chart logic is connected.
     </p>
   </section>
+
+  <!-- EXPLANATION -->
+  <section class="section muted fade-in">
+    <h2>Why This Matters</h2>
+    <p>
+      Traditional monetary systems can expand money supply over time while consumer
+      prices respond with delays and distortions.
+    </p>
+    <p>
+      Inflara is designed as a rule-based response to that macroeconomic problem.
+    </p>
+  </section>
+
+  <!-- DEFINITIONS -->
+  <section class="section fade-in">
+    <h2>Key Measures</h2>
+
+    <div class="columns">
+      <div class="column">
+        <h3>M1</h3>
+        <p>
+          The narrowest measure of money, usually including physical currency and
+          the most liquid deposits.
+        </p>
+      </div>
+
+      <div class="column">
+        <h3>M2</h3>
+        <p>
+          A broader monetary aggregate that includes M1 plus additional savings-type
+          balances and near-money instruments.
+        </p>
+      </div>
+
+      <div class="column">
+        <h3>M3</h3>
+        <p>
+          A broader measure again. In the euro area it is still published, while
+          official US M3 is no longer maintained.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>
+      Inflara is an open, rule-based monetary protocol designed to be auditable and constrained.
+    </p>
+  </footer>
 
   <script src="script.js"></script>
   <script src="macro.js"></script>
