@@ -89,7 +89,8 @@
 
 .button.secondary {
   background: transparent;
-  .logo {
+}
+.logo {
   width: 180px;
   height: auto;
   display: block;
@@ -105,6 +106,15 @@
   /* Glow */
   box-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
 }
+.logo {
+  width: 180px;
+  margin-bottom: 20px;
+
+  opacity: 0.95;
+  mix-blend-mode: screen;
+
+  -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+  mask-image: radial-gradient(circle, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
 }
 #starfield {
   position: fixed;
