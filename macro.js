@@ -1,5 +1,6 @@
 // ==============================
 // INFLARA MACRO DASHBOARD
+// STABLE DEMO VERSION
 // ==============================
 
 let macroChart = null;
@@ -22,34 +23,11 @@ const macroState = {
 };
 
 // ------------------------------
-// DATA SOURCES
-// ------------------------------
-
-const ECB_BASE = "https://data-api.ecb.europa.eu/service/data";
-
-const ECB_SERIES = {
-  m1: `${ECB_BASE}/BSI/M.U2.Y.V.M10.X.I.U2.2300.Z01.A?format=jsondata`,
-  m2: `${ECB_BASE}/BSI/M.U2.Y.V.M20.X.I.U2.2300.Z01.A?format=jsondata`,
-  m3: `${ECB_BASE}/BSI/M.U2.Y.V.M30.X.I.U2.2300.Z01.A?format=jsondata`,
-  inflationPrimary: `${ECB_BASE}/HICP/M.U2.N.000000.4.ANR?format=jsondata`,
-  inflationFallback: `${ECB_BASE}/ICP/M.U2.N.000000.4.ANR?format=jsondata`
-};
-
-const FRED_BASE = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=";
-
-const FRED_SERIES = {
-  m1: `${FRED_BASE}M1SL`,
-  m2: `${FRED_BASE}M2SL`,
-  inflationBase: `${FRED_BASE}CPIAUCSL`
-};
-
-// ------------------------------
 // HELPERS
 // ------------------------------
 
-function formatMonthLabel(dateString) {
-  if (!dateString) return "";
-  return dateString.slice(0, 7);
+function formatMonthLabel(date) {
+  return date.toISOString().slice(0, 7);
 }
 
 function parseMonthDate(label) {
@@ -58,40 +36,7 @@ function parseMonthDate(label) {
 
 function latestValue(series) {
   if (!series || !series.length) return "No data";
-  const value = series[series.length - 1].value;
-  return `${value.toFixed(1)}%`;
-}
-
-function getCutoffDate(years) {
-  if (!years) return null;
-  const cutoff = new Date();
-  cutoff.setFullYear(cutoff.getFullYear() - years);
-  return cutoff;
-}
-
-function filterByYears(series, years) {
-  if (!years) return series;
-  const cutoff = getCutoffDate(years);
-  return series.filter((item) => item.date >= cutoff);
-}
-
-function sortSeries(series) {
-  return [...series].sort((a, b) => a.date - b.date);
-}
-
-function mergeLabels(seriesCollection) {
-  const set = new Set();
-
-  seriesCollection.forEach((series) => {
-    series.forEach((row) => set.add(row.label));
-  });
-
-  return Array.from(set).sort();
-}
-
-function mapSeriesToLabels(labels, series) {
-  const map = new Map(series.map((row) => [row.label, row.value]));
-  return labels.map((label) => (map.has(label) ? map.get(label) : null));
+  return `${series[series.length - 1].value.toFixed(1)}%`;
 }
 
 function setText(id, value) {
@@ -99,207 +44,86 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
-function setActive(groupSelector, activeElement) {
-  document.querySelectorAll(groupSelector).forEach((el) => {
+function setActive(selector, activeEl) {
+  document.querySelectorAll(selector).forEach((el) => {
     el.classList.remove("active");
   });
-  activeElement.classList.add("active");
+
+  if (activeEl) activeEl.classList.add("active");
 }
 
-function hasSeriesData(regionData) {
-  return (
-    regionData.inflation.length ||
-    regionData.m1.length ||
-    regionData.m2.length ||
-    regionData.m3.length
-  );
+function getCutoffDate(years) {
+  if (!years) return null;
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - years);
+  return date;
 }
 
-// ------------------------------
-// FETCH HELPERS
-// ------------------------------
+function filterByYears(series, years) {
+  if (!years) return series;
+  const cutoff = getCutoffDate(years);
+  return series.filter((row) => row.date >= cutoff);
+}
 
-async function fetchJson(url) {
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/json"
-    }
+function mergeLabels(seriesCollection) {
+  const labels = new Set();
+
+  seriesCollection.forEach((series) => {
+    series.forEach((row) => labels.add(row.label));
   });
 
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
+  return Array.from(labels).sort();
 }
 
-async function fetchText(url) {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`);
-  }
-
-  return response.text();
+function mapSeriesToLabels(labels, series) {
+  const map = new Map(series.map((row) => [row.label, row.value]));
+  return labels.map((label) => map.get(label) ?? null);
 }
 
 // ------------------------------
-// ECB PARSING
+// DEMO DATA GENERATION
 // ------------------------------
 
-function parseECBSeries(json) {
-  const dataset = json?.dataSets?.[0];
-  const structure = json?.structure;
+function generateSmoothSeries(base, drift, volatility, min, max, months) {
+  const data = [];
+  let value = base;
 
-  if (!dataset || !structure) {
-    return [];
+  for (let i = months; i >= 0; i--) {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+
+    const noise = (Math.random() - 0.5) * volatility;
+    value += drift + noise;
+
+    if (value < min) value = min;
+    if (value > max) value = max;
+
+    data.push({
+      label: formatMonthLabel(date),
+      date: new Date(date),
+      value: Number(value.toFixed(2))
+    });
   }
 
-  const seriesKeys = Object.keys(dataset.series || {});
-  if (!seriesKeys.length) {
-    return [];
-  }
-
-  const firstSeries = dataset.series[seriesKeys[0]];
-  const observations = firstSeries?.observations || {};
-  const observationDimension = structure?.dimensions?.observation?.[0]?.values || [];
-
-  const parsed = Object.entries(observations)
-    .map(([index, valueArray]) => {
-      const observationMeta = observationDimension[Number(index)];
-      const rawDate = observationMeta?.id || observationMeta?.name;
-
-      if (!rawDate || !valueArray || valueArray[0] === null || valueArray[0] === undefined) {
-        return null;
-      }
-
-      const value = Number(valueArray[0]);
-      if (Number.isNaN(value)) {
-        return null;
-      }
-
-      const label = formatMonthLabel(rawDate);
-
-      return {
-        label,
-        date: parseMonthDate(label),
-        value
-      };
-    })
-    .filter(Boolean);
-
-  return sortSeries(parsed);
+  return data;
 }
 
-async function loadEuroAreaData() {
-  // TEMP: demo macro data (so chart works immediately)
-
-  const now = new Date();
-  const months = 120;
-
-  function generateSeries(base, volatility) {
-    const data = [];
-    let value = base;
-
-    for (let i = months; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-
-      value += (Math.random() - 0.5) * volatility;
-
-      data.push({
-        label: date.toISOString().slice(0, 7),
-        date: date,
-        value: value
-      });
-    }
-
-    return data;
-  }
+function loadDemoData() {
+  const months = 240;
 
   macroState.ea = {
-    inflation: generateSeries(2.5, 0.3),
-    m1: generateSeries(6, 0.8),
-    m2: generateSeries(5, 0.6),
-    m3: generateSeries(4.5, 0.5)
+    inflation: generateSmoothSeries(2.3, 0.003, 0.10, 0.5, 6.0, months),
+    m1: generateSmoothSeries(6.0, -0.002, 0.14, 2.0, 9.0, months),
+    m2: generateSmoothSeries(5.0, -0.001, 0.12, 2.0, 8.0, months),
+    m3: generateSmoothSeries(4.2, 0.000, 0.10, 1.5, 7.0, months)
   };
-}
 
-// ------------------------------
-// FRED PARSING
-// ------------------------------
-
-function parseFredCsv(csvText) {
-  const lines = csvText.trim().split("\n");
-  if (lines.length < 2) return [];
-
-  const rows = [];
-
-  for (let i = 1; i < lines.length; i += 1) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    const parts = line.split(",");
-    if (parts.length < 2) continue;
-
-    const rawDate = parts[0];
-    const rawValue = parts[1];
-
-    if (!rawDate || rawValue === ".") continue;
-
-    const value = Number(rawValue);
-    if (Number.isNaN(value)) continue;
-
-    const label = formatMonthLabel(rawDate);
-
-    rows.push({
-      label,
-      date: parseMonthDate(label),
-      value
-    });
-  }
-
-  return sortSeries(rows);
-}
-
-function toYearOverYearPercent(series) {
-  const output = [];
-
-  for (let i = 12; i < series.length; i += 1) {
-    const current = series[i];
-    const previous = series[i - 12];
-
-    if (!previous || previous.value === 0) continue;
-
-    const yoy = ((current.value / previous.value) - 1) * 100;
-
-    if (Number.isNaN(yoy) || !Number.isFinite(yoy)) continue;
-
-    output.push({
-      label: current.label,
-      date: current.date,
-      value: yoy
-    });
-  }
-
-  return output;
-}
-
-async function loadUSData() {
-  const [m1Csv, m2Csv, inflationCsv] = await Promise.all([
-    fetchText(FRED_SERIES.m1),
-    fetchText(FRED_SERIES.m2),
-    fetchText(FRED_SERIES.inflationBase)
-  ]);
-
-  const m1Levels = parseFredCsv(m1Csv);
-  const m2Levels = parseFredCsv(m2Csv);
-  const inflationLevels = parseFredCsv(inflationCsv);
-
-  macroState.us.m1 = toYearOverYearPercent(m1Levels);
-  macroState.us.m2 = toYearOverYearPercent(m2Levels);
-  macroState.us.m3 = [];
-  macroState.us.inflation = toYearOverYearPercent(inflationLevels);
+  macroState.us = {
+    inflation: generateSmoothSeries(2.8, 0.002, 0.12, 0.8, 7.0, months),
+    m1: generateSmoothSeries(7.2, -0.003, 0.16, 2.0, 10.0, months),
+    m2: generateSmoothSeries(5.8, -0.002, 0.13, 2.0, 8.5, months),
+    m3: []
+  };
 }
 
 // ------------------------------
@@ -330,7 +154,7 @@ function buildChartData() {
         backgroundColor: "rgba(243, 231, 179, 0.15)",
         borderWidth: 2,
         pointRadius: 0,
-        tension: 0.25
+        tension: 0.3
       },
       {
         label: "M1",
@@ -339,7 +163,7 @@ function buildChartData() {
         backgroundColor: "rgba(124, 180, 255, 0.15)",
         borderWidth: 2,
         pointRadius: 0,
-        tension: 0.25
+        tension: 0.3
       },
       {
         label: "M2",
@@ -348,7 +172,7 @@ function buildChartData() {
         backgroundColor: "rgba(141, 240, 210, 0.15)",
         borderWidth: 2,
         pointRadius: 0,
-        tension: 0.25
+        tension: 0.3
       },
       {
         label: "M3",
@@ -357,7 +181,7 @@ function buildChartData() {
         backgroundColor: "rgba(212, 175, 55, 0.15)",
         borderWidth: 2,
         pointRadius: 0,
-        tension: 0.25,
+        tension: 0.3,
         hidden: currentRegion === "us"
       }
     ]
@@ -365,25 +189,15 @@ function buildChartData() {
 }
 
 // ------------------------------
-// CHART RENDER
+// RENDER
 // ------------------------------
 
 function renderMacroChart() {
   const canvas = document.getElementById("macroChart");
   if (!canvas) return;
 
-  const chartData = buildChartData();
-
-  if (!chartData.labels.length) {
-    if (macroChart) {
-      macroChart.destroy();
-      macroChart = null;
-    }
-    setText("macro-note", "No data available for the selected region.");
-    return;
-  }
-
   const ctx = canvas.getContext("2d");
+  const chartData = buildChartData();
 
   if (macroChart) {
     macroChart.destroy();
@@ -423,13 +237,15 @@ function renderMacroChart() {
         x: {
           ticks: {
             color: "#9aa0a6",
-            maxTicksLimit: 12
+            maxTicksLimit: 10
           },
           grid: {
             color: "rgba(255,255,255,0.06)"
           }
         },
         y: {
+          min: 0,
+          max: 10,
           ticks: {
             color: "#9aa0a6",
             callback(value) {
@@ -456,17 +272,13 @@ function renderMacroCards() {
     setText("card-m3", "Discontinued");
     setText(
       "macro-note",
-      hasSeriesData(regionData)
-        ? "US mode shows M1, M2 and CPI year-over-year change. Official US M3 is discontinued."
-        : "US data is not available right now."
+      "US mode shows demo inflation, M1 and M2 trend data. Official US M3 is discontinued."
     );
   } else {
     setText("card-m3", latestValue(regionData.m3));
     setText(
       "macro-note",
-      hasSeriesData(regionData)
-        ? "Euro Area mode shows ECB monetary aggregates and euro area inflation as annual growth rates."
-        : "Euro Area data is not available right now."
+      "Euro Area mode shows demo inflation and monetary aggregate trend data."
     );
   }
 }
@@ -513,52 +325,12 @@ function bindMacroEvents() {
 // INIT
 // ------------------------------
 
-async function initMacroPage() {
-  const chartCanvas = document.getElementById("macroChart");
-  if (!chartCanvas) return;
+function initMacroPage() {
+  const canvas = document.getElementById("macroChart");
+  if (!canvas) return;
 
+  loadDemoData();
   bindMacroEvents();
-  setText("macro-note", "Loading macro data...");
-
-  try {
-    await loadEuroAreaData();
-  } catch (error) {
-    console.error("Euro Area macro data failed:", error);
-    macroState.ea = {
-      inflation: [],
-      m1: [],
-      m2: [],
-      m3: []
-    };
-  }
-
-  try {
-    await loadUSData();
-  } catch (error) {
-    console.warn("US macro data failed:", error);
-    macroState.us = {
-      inflation: [],
-      m1: [],
-      m2: [],
-      m3: []
-    };
-  }
-
-  if (!hasSeriesData(macroState.ea) && !hasSeriesData(macroState.us)) {
-    setText("macro-note", "Could not load macro data. Check the browser console for details.");
-    setText("card-inflation", "Error");
-    setText("card-m1", "Error");
-    setText("card-m2", "Error");
-    setText("card-m3", "Error");
-    return;
-  }
-
-  if (!hasSeriesData(macroState.ea) && hasSeriesData(macroState.us)) {
-    currentRegion = "us";
-    const usButton = document.getElementById("region-us");
-    if (usButton) setActive(".macro-tab", usButton);
-  }
-
   renderMacroDashboard();
 }
 
