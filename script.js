@@ -1,145 +1,225 @@
 // ==============================
+// GLOBAL CONFIG
+// ==============================
+
+const APP_CONFIG = {
+  rpc: "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_",
+  contracts: {
+    infl: "0x393289f921bbE6A684B79B9939816AAE68AC1B60",
+    engine: "0x8a00327e3631B2e63B320c1E107055fd9fd15f40",
+    controller: "0x30481Cc7D7A0F437dec661e36b0a5394F74bBe62"
+  }
+};
+
+const ABI = {
+  token: [
+    "function totalSupply() view returns (uint256)"
+  ],
+  engine: [
+    "function currentCPIBps() view returns (uint256)"
+  ],
+  controller: [
+    "function previewEpoch() view returns (uint256 cpiBps, uint256 annualRateBps, uint256 mintTotal, uint256 toStakers, uint256 toTreasury)"
+  ]
+};
+
+// ==============================
+// APP INIT
+// ==============================
+
+document.addEventListener("DOMContentLoaded", () => {
+  initFadeInObserver();
+  initStarfield();
+  initDashboard();
+});
+
+// ==============================
 // FADE-IN OBSERVER
 // ==============================
-document.addEventListener("DOMContentLoaded", () => {
+
+function initFadeInObserver() {
   const elements = document.querySelectorAll(".fade-in");
+  if (!elements.length) return;
 
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-          observer.unobserve(entry.target);
-        }
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target);
       });
     },
     { threshold: 0.15 }
   );
 
-  elements.forEach((el) => observer.observe(el));
-
-  // Load dashboard when page is ready
-  loadDashboard();
-});
+  elements.forEach((element) => observer.observe(element));
+}
 
 // ==============================
 // STARFIELD BACKGROUND
 // ==============================
-const canvas = document.getElementById("starfield");
-const ctx = canvas ? canvas.getContext("2d") : null;
 
+let starfieldCanvas = null;
+let starfieldContext = null;
 let stars = [];
+let starAnimationStarted = false;
+
 const STAR_COUNT = 100;
 
-function resizeCanvas() {
-  if (!canvas) return;
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+function initStarfield() {
+  starfieldCanvas = document.getElementById("starfield");
+  if (!starfieldCanvas) return;
+
+  starfieldContext = starfieldCanvas.getContext("2d");
+  if (!starfieldContext) return;
+
+  resizeStarfield();
+  createStars();
+
+  if (!starAnimationStarted) {
+    starAnimationStarted = true;
+    requestAnimationFrame(drawStars);
+  }
+
+  window.addEventListener("resize", handleStarfieldResize);
 }
 
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+function handleStarfieldResize() {
+  resizeStarfield();
+  createStars();
+}
+
+function resizeStarfield() {
+  if (!starfieldCanvas) return;
+  starfieldCanvas.width = window.innerWidth;
+  starfieldCanvas.height = window.innerHeight;
+}
 
 function createStars() {
-  if (!canvas) return;
+  if (!starfieldCanvas) return;
+
   stars = [];
-  for (let i = 0; i < STAR_COUNT; i++) {
+  for (let i = 0; i < STAR_COUNT; i += 1) {
     stars.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
+      x: Math.random() * starfieldCanvas.width,
+      y: Math.random() * starfieldCanvas.height,
       radius: Math.random() * 1.5,
-      speed: 0.05 + Math.random() * 0.1,
-      opacity: 0.3 + Math.random() * 0.4,
+      speed: 0.05 + Math.random() * 0.10,
+      opacity: 0.25 + Math.random() * 0.50
     });
   }
 }
 
 function drawStars() {
-  if (!canvas || !ctx) return;
+  if (!starfieldCanvas || !starfieldContext) return;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  starfieldContext.clearRect(0, 0, starfieldCanvas.width, starfieldCanvas.height);
 
-  stars.forEach((star) => {
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
-    ctx.fill();
+  for (const star of stars) {
+    starfieldContext.beginPath();
+    starfieldContext.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    starfieldContext.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+    starfieldContext.fill();
 
     star.y -= star.speed;
 
     if (star.y < 0) {
-      star.y = canvas.height;
-      star.x = Math.random() * canvas.width;
+      star.y = starfieldCanvas.height;
+      star.x = Math.random() * starfieldCanvas.width;
     }
-  });
+  }
 
   requestAnimationFrame(drawStars);
 }
-
-createStars();
-drawStars();
 
 // ==============================
 // INFLARA DASHBOARD
 // ==============================
 
-// Replace this with your FULL Sepolia Alchemy URL if needed
-const RPC = "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_";
+async function initDashboard() {
+  const supplyEl = document.getElementById("supply");
+  const cpiEl = document.getElementById("cpi");
+  const emissionsEl = document.getElementById("emissions");
 
-const INFL = "0x393289f921bbE6A684B79B9939816AAE68AC1B60";
-const ENGINE = "0x8a00327e3631B2e63B320c1E107055fd9fd15f40";
-const CONTROLLER = "0x30481Cc7D7A0F437dec661e36b0a5394F74bBe62";
+  const hasDashboard =
+    supplyEl !== null || cpiEl !== null || emissionsEl !== null;
 
-const tokenABI = [
-  "function totalSupply() view returns (uint256)"
-];
+  if (!hasDashboard) return;
 
-const engineABI = [
-  "function currentCPIBps() view returns (uint256)"
-];
+  await loadDashboard();
 
-const controllerABI = [
-  "function previewEpoch() view returns (uint256 cpiBps, uint256 annualRateBps, uint256 mintTotal, uint256 toStakers, uint256 toTreasury)"
-];
+  const refreshButton = document.querySelector("[data-refresh-dashboard]");
+  if (refreshButton) {
+    refreshButton.addEventListener("click", loadDashboard);
+  }
+}
 
 async function loadDashboard() {
+  const supplyEl = document.getElementById("supply");
+  const cpiEl = document.getElementById("cpi");
+  const emissionsEl = document.getElementById("emissions");
+
   try {
     if (typeof ethers === "undefined") {
       throw new Error("ethers library not loaded");
     }
 
-    const provider = new ethers.JsonRpcProvider(RPC);
+    setDashboardLoadingState();
 
-    const token = new ethers.Contract(INFL, tokenABI, provider);
-    const engine = new ethers.Contract(ENGINE, engineABI, provider);
-    const controller = new ethers.Contract(CONTROLLER, controllerABI, provider);
+    const provider = new ethers.JsonRpcProvider(APP_CONFIG.rpc);
 
-    const supply = await token.totalSupply();
-    const cpi = await engine.currentCPIBps();
-    const preview = await controller.previewEpoch();
+    const token = new ethers.Contract(
+      APP_CONFIG.contracts.infl,
+      ABI.token,
+      provider
+    );
 
-    const formattedSupply = Number(ethers.formatUnits(supply, 18)).toLocaleString();
-    const formattedCpi = (Number(cpi) / 100).toFixed(2) + "%";
-    const formattedEmissions = Number(
-      ethers.formatUnits(preview.mintTotal ?? preview[2], 18)
-    ).toLocaleString();
+    const engine = new ethers.Contract(
+      APP_CONFIG.contracts.engine,
+      ABI.engine,
+      provider
+    );
 
-    const supplyEl = document.getElementById("supply");
-    const cpiEl = document.getElementById("cpi");
-    const emissionsEl = document.getElementById("emissions");
+    const controller = new ethers.Contract(
+      APP_CONFIG.contracts.controller,
+      ABI.controller,
+      provider
+    );
 
-    if (supplyEl) supplyEl.innerText = formattedSupply + " INFL";
-    if (cpiEl) cpiEl.innerText = formattedCpi;
-    if (emissionsEl) emissionsEl.innerText = formattedEmissions + " INFL";
+    const [supply, cpi, preview] = await Promise.all([
+      token.totalSupply(),
+      engine.currentCPIBps(),
+      controller.previewEpoch()
+    ]);
+
+    const formattedSupply =
+      Number(ethers.formatUnits(supply, 18)).toLocaleString() + " INFL";
+
+    const formattedCpi =
+      (Number(cpi) / 100).toFixed(2) + "%";
+
+    const mintTotal = preview.mintTotal ?? preview[2];
+    const formattedEmissions =
+      Number(ethers.formatUnits(mintTotal, 18)).toLocaleString() + " INFL";
+
+    if (supplyEl) supplyEl.textContent = formattedSupply;
+    if (cpiEl) cpiEl.textContent = formattedCpi;
+    if (emissionsEl) emissionsEl.textContent = formattedEmissions;
   } catch (error) {
     console.error("Dashboard load error:", error);
 
-    const supplyEl = document.getElementById("supply");
-    const cpiEl = document.getElementById("cpi");
-    const emissionsEl = document.getElementById("emissions");
-
-    if (supplyEl) supplyEl.innerText = "Error loading";
-    if (cpiEl) cpiEl.innerText = "Error loading";
-    if (emissionsEl) emissionsEl.innerText = "Error loading";
+    if (supplyEl) supplyEl.textContent = "Error loading";
+    if (cpiEl) cpiEl.textContent = "Error loading";
+    if (emissionsEl) emissionsEl.textContent = "Error loading";
   }
+}
+
+function setDashboardLoadingState() {
+  const supplyEl = document.getElementById("supply");
+  const cpiEl = document.getElementById("cpi");
+  const emissionsEl = document.getElementById("emissions");
+
+  if (supplyEl) supplyEl.textContent = "Loading...";
+  if (cpiEl) cpiEl.textContent = "Loading...";
+  if (emissionsEl) emissionsEl.textContent = "Loading...";
 }
