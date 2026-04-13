@@ -192,27 +192,37 @@ function parseECBSeries(json) {
 }
 
 async function loadEuroAreaData() {
-  const [m1Json, m2Json, m3Json] = await Promise.all([
-    fetchJson(ECB_SERIES.m1),
-    fetchJson(ECB_SERIES.m2),
-    fetchJson(ECB_SERIES.m3)
-  ]);
+  // TEMP: demo macro data (so chart works immediately)
 
-  let inflationJson;
-  try {
-    inflationJson = await fetchJson(ECB_SERIES.inflationPrimary);
-  } catch (error) {
-    inflationJson = await fetchJson(ECB_SERIES.inflationFallback);
+  const now = new Date();
+  const months = 120;
+
+  function generateSeries(base, volatility) {
+    const data = [];
+    let value = base;
+
+    for (let i = months; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+
+      value += (Math.random() - 0.5) * volatility;
+
+      data.push({
+        label: date.toISOString().slice(0, 7),
+        date: date,
+        value: value
+      });
+    }
+
+    return data;
   }
 
-  macroState.ea.m1 = parseECBSeries(m1Json);
-  macroState.ea.m2 = parseECBSeries(m2Json);
-  macroState.ea.m3 = parseECBSeries(m3Json);
-  macroState.ea.inflation = parseECBSeries(inflationJson);
-
-  if (!hasSeriesData(macroState.ea)) {
-    throw new Error("Euro Area data loaded but returned no usable observations.");
-  }
+  macroState.ea = {
+    inflation: generateSeries(2.5, 0.3),
+    m1: generateSeries(6, 0.8),
+    m2: generateSeries(5, 0.6),
+    m3: generateSeries(4.5, 0.5)
+  };
 }
 
 // ------------------------------
