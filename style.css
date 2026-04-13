@@ -1,3 +1,65 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  padding: 18px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(3, 8, 20, 0.72);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+  box-sizing: border-box;
+}
+
+.nav-brand a {
+  text-decoration: none;
+  color: #f3e7b3;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+}
+
+.nav-links {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 34px;
+  margin-left: 40px;
+  flex-wrap: wrap;
+}
+
+.nav-links a {
+  position: relative;
+  text-decoration: none;
+  color: #e7eaf3;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 500;
+  transition: color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.nav-links a:hover {
+  color: #f3e7b3;
+  text-shadow: 0 0 10px rgba(243, 231, 179, 0.35);
+}
+
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -7px;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #d4af37, transparent);
+  transition: width 0.25s ease;
+}
+
+.nav-links a:hover::after {
+  width: 100%;
+}
 :root {
   --bg: #0e1117;
   --fg: #e6e8eb;
@@ -8,7 +70,26 @@
 * {
   box-sizing: border-box;
 }
+.button {
+  display: inline-block;
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  color: #f7f2dc;
+  text-decoration: none;
+  background: rgba(212, 175, 55, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
 
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(212, 175, 55, 0.18);
+  background: rgba(212, 175, 55, 0.14);
+}
+
+.button.secondary {
+  background: transparent;
+}
 #starfield {
   position: fixed;
   top: 0;
