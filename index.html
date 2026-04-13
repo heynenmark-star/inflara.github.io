@@ -11,22 +11,22 @@
   <canvas id="starfield"></canvas>
 
   <!-- NAVIGATION -->
-   <header class="topbar">
-  <div class="nav-brand">
-    <a href="index.html">INFLARA</a>
-  </div>
+  <header class="topbar">
+    <div class="nav-brand">
+      <a href="index.html">INFLARA</a>
+    </div>
 
-  <nav class="nav-links">
-    <a href="index.html">Home</a>
-    <a href="index.html#how">How It Works</a>
-    <a href="macro.html">Macro Dashboard</a>
-    <a href="live-data.html">Live Data</a>
-    <a href="staking.html">Staking</a>
-    <a href="index.html#buy">Buy</a>
-    <a href="docs.html">Docs</a>
-    <a href="chat.html">Chat</a>
-  </nav>
-</header>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="#how">How It Works</a>
+      <a href="macro.html">Macro Dashboard</a>
+      <a href="live-data.html">Live Data</a>
+      <a href="staking.html">Staking</a>
+      <a href="#buy">Buy</a>
+      <a href="docs.html">Docs</a>
+      <a href="chat.html">Chat</a>
+    </nav>
+  </header>
 
   <!-- HERO -->
   <section id="home" class="hero fade-in">
@@ -42,7 +42,7 @@
 
     <div class="hero-buttons">
       <a href="#how" class="button">How It Works</a>
-      <a href="#data" class="button secondary">View Live Data</a>
+      <a href="live-data.html" class="button secondary">View Live Data</a>
       <a href="#buy" class="button secondary">Buy INFL</a>
     </div>
   </section>
@@ -91,55 +91,6 @@
     <p class="note">
       When inputs are noisy or uncertain, the system defaults to inaction.
     </p>
-  </section>
-
-  <!-- MACRO DASHBOARD -->
-  <section id="macro" class="section fade-in">
-    <h2>Macro Dashboard</h2>
-    <p class="section-intro">
-      Visualising money supply expansion and inflation over time.
-    </p>
-
-    <div class="macro-controls">
-      <button class="macro-tab active">US</button>
-      <button class="macro-tab">Euro Area</button>
-      <button class="macro-tab">Compare</button>
-    </div>
-
-    <div class="chart-box">
-      <p class="chart-placeholder">
-        Money Supply vs Inflation chart will appear here.
-      </p>
-      <p class="note">
-        Planned series: M1, M2, M3 and CPI inflation.
-      </p>
-    </div>
-
-    <div class="columns macro-cards">
-      <div class="column">
-        <h3>Latest CPI</h3>
-        <p id="macro-cpi">Loading...</p>
-      </div>
-      <div class="column">
-        <h3>M2 Growth</h3>
-        <p id="macro-m2">Loading...</p>
-      </div>
-      <div class="column">
-        <h3>Trend Signal</h3>
-        <p id="macro-trend">Loading...</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- LIVE DATA -->
-  <section id="data" class="section fade-in">
-    <h2>Live Data</h2>
-    <div id="dashboard" class="dashboard-box">
-      <p>Circulating Supply: <span id="supply">loading...</span></p>
-      <p>CPI: <span id="cpi">loading...</span></p>
-      <p>Epoch Emissions: <span id="emissions">loading...</span></p>
-      <button onclick="loadDashboard()">Refresh Data</button>
-    </div>
   </section>
 
   <!-- TOKENOMICS -->
@@ -243,8 +194,23 @@
     <a href="#" class="button">Buy on Uniswap</a>
   </section>
 
+  <!-- LIVE DATA PREVIEW -->
+  <section id="data-preview" class="section fade-in">
+    <h2>Live Data Preview</h2>
+    <div id="dashboard" class="dashboard-box">
+      <p>Circulating Supply: <span id="supply">Loading...</span></p>
+      <p>CPI: <span id="cpi">Loading...</span></p>
+      <p>Epoch Emissions: <span id="emissions">Loading...</span></p>
+      <button data-refresh-dashboard>Refresh Data</button>
+    </div>
+
+    <div class="center">
+      <a href="live-data.html" class="button secondary">Open Full Live Data Page</a>
+    </div>
+  </section>
+
   <!-- CHAT -->
-  <section id="chat" class="section fade-in">
+  <section id="chat-preview" class="section fade-in">
     <h2>Inflara Chat</h2>
     <p class="section-intro">
       Ask about Inflara, inflation, tokenomics, or the macro dashboard.
@@ -306,22 +272,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
-  <!-- WHITE PAPER -->
-  <section class="section center fade-in">
-    <h2>White Paper</h2>
-    <a href="inflara-whitepaper.pdf" class="button">Read the White Paper</a>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <p>
-      Inflara is an open, rule-based monetary protocol designed to be auditable and constrained.
-    </p>
-  </footer>
-
-  <script src="script.js"></script>
-</body>
-</html>
-
-
