@@ -1,1 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inflara | Macro Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <canvas id="starfield"></canvas>
 
+  <header class="topbar">
+    <div class="nav-brand">
+      <a href="index.html">INFLARA</a>
+    </div>
+
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#how">How It Works</a>
+      <a href="macro.html">Macro Dashboard</a>
+      <a href="live-data.html">Live Data</a>
+      <a href="staking.html">Staking</a>
+      <a href="index.html#buy">Buy</a>
+      <a href="docs.html">Docs</a>
+      <a href="chat.html">Chat</a>
+    </nav>
+  </header>
+
+  <section class="hero fade-in macro-hero">
+    <h1>Macro Dashboard</h1>
+    <p class="subtitle">Money supply growth and inflation, visualised over time.</p>
+    <p class="intro">
+      This dashboard compares broad monetary expansion with consumer inflation.
+    </p>
+  </section>
+
+  <section class="section fade-in">
+    <div class="macro-toolbar">
+      <div class="macro-tabs">
+        <button class="macro-tab active" id="region-ea">Euro Area</button>
+        <button class="macro-tab" id="region-us">US</button>
+      </div>
+
+      <div class="macro-ranges">
+        <button class="range-btn active" data-years="5">5Y</button>
+        <button class="range-btn" data-years="10">10Y</button>
+        <button class="range-btn" data-years="20">20Y</button>
+        <button class="range-btn" data-years="0">Max</button>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <canvas id="macroChart"></canvas>
+    </div>
+
+    <div class="columns macro-cards">
+      <div class="column">
+        <h3>Latest CPI / HICP</h3>
+        <p id="card-inflation">Loading...</p>
+      </div>
+      <div class="column">
+        <h3>Latest M1</h3>
+        <p id="card-m1">Loading...</p>
+      </div>
+      <div class="column">
+        <h3>Latest M2</h3>
+        <p id="card-m2">Loading...</p>
+      </div>
+      <div class="column">
+        <h3>Latest M3</h3>
+        <p id="card-m3">Loading...</p>
+      </div>
+    </div>
+
+    <p class="note" id="macro-note">
+      Euro Area mode uses ECB monetary aggregates and HICP inflation. US mode can show M1, M2 and CPI, but official US M3 is discontinued.
+    </p>
+  </section>
+
+  <script src="script.js"></script>
+  <script src="macro.js"></script>
+</body>
+</html>
