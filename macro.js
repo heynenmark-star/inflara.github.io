@@ -25,26 +25,18 @@ const macroState = {
 // DATA SOURCES
 // ------------------------------
 
-// ECB official data API
 const ECB_BASE = "https://data-api.ecb.europa.eu/service/data";
 
-// Euro Area monetary aggregates (annual growth rate)
-// Dataset: BSI
 const ECB_SERIES = {
   m1: `${ECB_BASE}/BSI/M.U2.Y.V.M10.X.I.U2.2300.Z01.A?format=jsondata`,
   m2: `${ECB_BASE}/BSI/M.U2.Y.V.M20.X.I.U2.2300.Z01.A?format=jsondata`,
   m3: `${ECB_BASE}/BSI/M.U2.Y.V.M30.X.I.U2.2300.Z01.A?format=jsondata`,
-
-  // Try new HICP dataset first, then fallback to older ICP dataset
   inflationPrimary: `${ECB_BASE}/HICP/M.U2.N.000000.4.ANR?format=jsondata`,
   inflationFallback: `${ECB_BASE}/ICP/M.U2.N.000000.4.ANR?format=jsondata`
 };
 
-// FRED CSV download endpoints
 const FRED_BASE = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=";
 
-// US series
-// M1SL = M1, M2SL = M2, CPIAUCSL = CPI
 const FRED_SERIES = {
   m1: `${FRED_BASE}M1SL`,
   m2: `${FRED_BASE}M2SL`,
@@ -65,7 +57,7 @@ function parseMonthDate(label) {
 }
 
 function latestValue(series) {
-  if (!series || !series.length) return "Loading...";
+  if (!series || !series.length) return "No data";
   const value = series[series.length - 1].value;
   return `${value.toFixed(1)}%`;
 }
@@ -112,6 +104,15 @@ function setActive(groupSelector, activeElement) {
     el.classList.remove("active");
   });
   activeElement.classList.add("active");
+}
+
+function hasSeriesData(regionData) {
+  return (
+    regionData.inflation.length ||
+    regionData.m1.length ||
+    regionData.m2.length ||
+    regionData.m3.length
+  );
 }
 
 // ------------------------------
@@ -161,7 +162,6 @@ function parseECBSeries(json) {
 
   const firstSeries = dataset.series[seriesKeys[0]];
   const observations = firstSeries?.observations || {};
-
   const observationDimension = structure?.dimensions?.observation?.[0]?.values || [];
 
   const parsed = Object.entries(observations)
@@ -209,6 +209,10 @@ async function loadEuroAreaData() {
   macroState.ea.m2 = parseECBSeries(m2Json);
   macroState.ea.m3 = parseECBSeries(m3Json);
   macroState.ea.inflation = parseECBSeries(inflationJson);
+
+  if (!hasSeriesData(macroState.ea)) {
+    throw new Error("Euro Area data loaded but returned no usable observations.");
+  }
 }
 
 // ------------------------------
@@ -284,7 +288,7 @@ async function loadUSData() {
 
   macroState.us.m1 = toYearOverYearPercent(m1Levels);
   macroState.us.m2 = toYearOverYearPercent(m2Levels);
-  macroState.us.m3 = []; // official US M3 discontinued
+  macroState.us.m3 = [];
   macroState.us.inflation = toYearOverYearPercent(inflationLevels);
 }
 
@@ -358,8 +362,18 @@ function renderMacroChart() {
   const canvas = document.getElementById("macroChart");
   if (!canvas) return;
 
-  const ctx = canvas.getContext("2d");
   const chartData = buildChartData();
+
+  if (!chartData.labels.length) {
+    if (macroChart) {
+      macroChart.destroy();
+      macroChart = null;
+    }
+    setText("macro-note", "No data available for the selected region.");
+    return;
+  }
+
+  const ctx = canvas.getContext("2d");
 
   if (macroChart) {
     macroChart.destroy();
@@ -387,7 +401,9 @@ function renderMacroChart() {
           callbacks: {
             label(context) {
               const value = context.raw;
-              if (value === null || value === undefined) return `${context.dataset.label}: —`;
+              if (value === null || value === undefined) {
+                return `${context.dataset.label}: —`;
+              }
               return `${context.dataset.label}: ${Number(value).toFixed(1)}%`;
             }
           }
@@ -430,13 +446,17 @@ function renderMacroCards() {
     setText("card-m3", "Discontinued");
     setText(
       "macro-note",
-      "US mode shows M1, M2 and CPI year-over-year change. Official US M3 is discontinued."
+      hasSeriesData(regionData)
+        ? "US mode shows M1, M2 and CPI year-over-year change. Official US M3 is discontinued."
+        : "US data is not available right now."
     );
   } else {
     setText("card-m3", latestValue(regionData.m3));
     setText(
       "macro-note",
-      "Euro Area mode shows ECB monetary aggregates and euro area inflation as annual growth rates."
+      hasSeriesData(regionData)
+        ? "Euro Area mode shows ECB monetary aggregates and euro area inflation as annual growth rates."
+        : "Euro Area data is not available right now."
     );
   }
 }
@@ -488,24 +508,48 @@ async function initMacroPage() {
   if (!chartCanvas) return;
 
   bindMacroEvents();
-
   setText("macro-note", "Loading macro data...");
 
   try {
-    await Promise.all([
-      loadEuroAreaData(),
-      loadUSData()
-    ]);
-
-    renderMacroDashboard();
+    await loadEuroAreaData();
   } catch (error) {
-    console.error("Macro dashboard load error:", error);
+    console.error("Euro Area macro data failed:", error);
+    macroState.ea = {
+      inflation: [],
+      m1: [],
+      m2: [],
+      m3: []
+    };
+  }
+
+  try {
+    await loadUSData();
+  } catch (error) {
+    console.warn("US macro data failed:", error);
+    macroState.us = {
+      inflation: [],
+      m1: [],
+      m2: [],
+      m3: []
+    };
+  }
+
+  if (!hasSeriesData(macroState.ea) && !hasSeriesData(macroState.us)) {
     setText("macro-note", "Could not load macro data. Check the browser console for details.");
     setText("card-inflation", "Error");
     setText("card-m1", "Error");
     setText("card-m2", "Error");
     setText("card-m3", "Error");
+    return;
   }
+
+  if (!hasSeriesData(macroState.ea) && hasSeriesData(macroState.us)) {
+    currentRegion = "us";
+    const usButton = document.getElementById("region-us");
+    if (usButton) setActive(".macro-tab", usButton);
+  }
+
+  renderMacroDashboard();
 }
 
 document.addEventListener("DOMContentLoaded", initMacroPage);
