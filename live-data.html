@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inflara | Live Data</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <canvas id="starfield"></canvas>
+
+  <!-- NAVIGATION -->
+  <header class="topbar">
+    <div class="nav-brand">
+      <a href="index.html">INFLARA</a>
+    </div>
+
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#how">How It Works</a>
+      <a href="macro.html">Macro Dashboard</a>
+      <a href="live-data.html">Live Data</a>
+      <a href="staking.html">Staking</a>
+      <a href="index.html#buy">Buy</a>
+      <a href="docs.html">Docs</a>
+      <a href="chat.html">Chat</a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero fade-in">
+    <h1>Live Data</h1>
+    <p class="subtitle">Protocol state, tracked balances, and treasury-linked visualisation.</p>
+    <p class="intro">
+      Monitor the current Inflara supply, CPI input, projected epoch emissions,
+      and the balances of key project wallets and contracts.
+    </p>
+  </section>
+
+  <!-- CORE METRICS -->
+  <section class="section fade-in">
+    <h2>Core Protocol Metrics</h2>
+
+    <div class="columns">
+      <div class="column">
+        <h3>Circulating Supply</h3>
+        <p id="live-supply">Loading...</p>
+      </div>
+
+      <div class="column">
+        <h3>Current CPI</h3>
+        <p id="live-cpi">Loading...</p>
+      </div>
+
+      <div class="column">
+        <h3>Projected Epoch Emissions</h3>
+        <p id="live-emissions">Loading...</p>
+      </div>
+
+      <div class="column">
+        <h3>Last Refresh</h3>
+        <p id="live-refresh-time">Waiting...</p>
+      </div>
+    </div>
+
+    <div class="center" style="margin-top: 1.5rem;">
+      <button class="button" id="refresh-live-data" type="button">Refresh Live Data</button>
+    </div>
+  </section>
+
+  <!-- PROJECT HOLDER BALANCES -->
+  <section class="section fade-in">
+    <h2>Tracked Project Holders</h2>
+    <p class="section-intro">
+      These are the major wallets and contracts associated with the protocol structure.
+    </p>
+
+    <div class="columns">
+      <div class="column">
+        <h3>Treasury</h3>
+        <p id="holder-treasury-balance">Loading...</p>
+        <p class="note" id="holder-treasury-address">Address: not set</p>
+      </div>
+
+      <div class="column">
+        <h3>Staking Vault</h3>
+        <p id="holder-staking-balance">Loading...</p>
+        <p class="note" id="holder-staking-address">Address: not set</p>
+      </div>
+
+      <div class="column">
+        <h3>Founder Vesting</h3>
+        <p id="holder-vesting-balance">Loading...</p>
+        <p class="note" id="holder-vesting-address">Address: loading...</p>
+      </div>
+
+      <div class="column">
+        <h3>Protocol Safe</h3>
+        <p id="holder-safe-balance">Loading...</p>
+        <p class="note" id="holder-safe-address">Address: not set</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LINKED VISUAL -->
+  <section class="section fade-in">
+    <h2>Protocol Balance Map</h2>
+    <p class="section-intro">
+      A visual view of the protocol structure and the major linked holders around the token.
+    </p>
+
+    <div class="protocol-map">
+      <div class="map-line map-line-top-left"></div>
+      <div class="map-line map-line-top-right"></div>
+      <div class="map-line map-line-bottom-left"></div>
+      <div class="map-line map-line-bottom-right"></div>
+
+      <div class="map-node map-node-center">
+        <h3>INFL Token</h3>
+        <p id="map-token-supply">Loading...</p>
+      </div>
+
+      <div class="map-node map-node-top-left">
+        <h3>Treasury</h3>
+        <p id="map-treasury-balance">Loading...</p>
+      </div>
+
+      <div class="map-node map-node-top-right">
+        <h3>Staking Vault</h3>
+        <p id="map-staking-balance">Loading...</p>
+      </div>
+
+      <div class="map-node map-node-bottom-left">
+        <h3>Founder Vesting</h3>
+        <p id="map-vesting-balance">Loading...</p>
+      </div>
+
+      <div class="map-node map-node-bottom-right">
+        <h3>Protocol Safe</h3>
+        <p id="map-safe-balance">Loading...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTRACT ADDRESSES -->
+  <section class="section muted fade-in">
+    <h2>Tracked Contract Addresses</h2>
+
+    <div class="columns">
+      <div class="column">
+        <h3>Inflara Token</h3>
+        <p class="note mono" id="contract-token-address">Loading...</p>
+      </div>
+
+      <div class="column">
+        <h3>Monetary Engine</h3>
+        <p class="note mono" id="contract-engine-address">Loading...</p>
+      </div>
+
+      <div class="column">
+        <h3>Policy Controller</h3>
+        <p class="note mono" id="contract-controller-address">Loading...</p>
+      </div>
+
+      <div class="column">
+        <h3>Network</h3>
+        <p class="note">Sepolia</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      Inflara is an open, rule-based monetary protocol designed to be auditable and constrained.
+    </p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // ------------------------------
+    // LIVE DATA CONFIG
+    // ------------------------------
+
+    const LIVE_CONFIG = {
+      rpc: "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_",
+      infl: "0x393289f921bbE6A684B79B9939816AAE68AC1B60",
+      engine: "0x8a00327e3631B2e63B320c1E107055fd9fd15f40",
+      controller: "0x30481Cc7D7A0F437dec661e36b0a5394F74bBe62",
+
+      // Fill these in with your real addresses when ready:
+      treasury: "",
+      stakingVault: "",
+      founderVesting: "0x1337C20D2eB0336c2a2dDB32F4CaeC00d90D296a",
+      protocolSafe: ""
+    };
+
+    const tokenABI = [
+      "function totalSupply() view returns (uint256)",
+      "function balanceOf(address account) view returns (uint256)"
+    ];
+
+    const engineABI = [
+      "function currentCPIBps() view returns (uint256)"
+    ];
+
+    const controllerABI = [
+      "function previewEpoch() view returns (uint256 cpiBps, uint256 annualRateBps, uint256 mintTotal, uint256 toStakers, uint256 toTreasury)"
+    ];
+
+    function shortAddress(address) {
+      if (!address) return "not set";
+      return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    }
+
+    function formatInfl(value) {
+      return `${Number(ethers.formatUnits(value, 18)).toLocaleString()} INFL`;
+    }
+
+    function setLiveText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+
+    async function loadHolderBalance(token, address) {
+      if (!address) return "Not configured";
+      const balance = await token.balanceOf(address);
+      return formatInfl(balance);
+    }
+
+    async function loadLiveDataPage() {
+      try {
+        if (typeof ethers === "undefined") {
+          throw new Error("ethers not loaded");
+        }
+
+        const provider = new ethers.JsonRpcProvider(LIVE_CONFIG.rpc);
+        const token = new ethers.Contract(LIVE_CONFIG.infl, tokenABI, provider);
+        const engine = new ethers.Contract(LIVE_CONFIG.engine, engineABI, provider);
+        const controller = new ethers.Contract(LIVE_CONFIG.controller, controllerABI, provider);
+
+        const [supply, cpi, preview] = await Promise.all([
+          token.totalSupply(),
+          engine.currentCPIBps(),
+          controller.previewEpoch()
+        ]);
+
+        const formattedSupply = formatInfl(supply);
+        const formattedCpi = `${(Number(cpi) / 100).toFixed(2)}%`;
+        const formattedEmissions = formatInfl(preview.mintTotal ?? preview[2]);
+        const refreshTime = new Date().toLocaleString();
+
+        setLiveText("live-supply", formattedSupply);
+        setLiveText("live-cpi", formattedCpi);
+        setLiveText("live-emissions", formattedEmissions);
+        setLiveText("live-refresh-time", refreshTime);
+
+        setLiveText("map-token-supply", formattedSupply);
+
+        setLiveText("contract-token-address", LIVE_CONFIG.infl);
+        setLiveText("contract-engine-address", LIVE_CONFIG.engine);
+        setLiveText("contract-controller-address", LIVE_CONFIG.controller);
+
+        setLiveText("holder-treasury-address", `Address: ${shortAddress(LIVE_CONFIG.treasury)}`);
+        setLiveText("holder-staking-address", `Address: ${shortAddress(LIVE_CONFIG.stakingVault)}`);
+        setLiveText("holder-vesting-address", `Address: ${shortAddress(LIVE_CONFIG.founderVesting)}`);
+        setLiveText("holder-safe-address", `Address: ${shortAddress(LIVE_CONFIG.protocolSafe)}`);
+
+        const [
+          treasuryBalance,
+          stakingBalance,
+          vestingBalance,
+          safeBalance
+        ] = await Promise.all([
+          loadHolderBalance(token, LIVE_CONFIG.treasury),
+          loadHolderBalance(token, LIVE_CONFIG.stakingVault),
+          loadHolderBalance(token, LIVE_CONFIG.founderVesting),
+          loadHolderBalance(token, LIVE_CONFIG.protocolSafe)
+        ]);
+
+        setLiveText("holder-treasury-balance", treasuryBalance);
+        setLiveText("holder-staking-balance", stakingBalance);
+        setLiveText("holder-vesting-balance", vestingBalance);
+        setLiveText("holder-safe-balance", safeBalance);
+
+        setLiveText("map-treasury-balance", treasuryBalance);
+        setLiveText("map-staking-balance", stakingBalance);
+        setLiveText("map-vesting-balance", vestingBalance);
+        setLiveText("map-safe-balance", safeBalance);
+      } catch (error) {
+        console.error("Live data page error:", error);
+
+        [
+          "live-supply",
+          "live-cpi",
+          "live-emissions",
+          "live-refresh-time",
+          "holder-treasury-balance",
+          "holder-staking-balance",
+          "holder-vesting-balance",
+          "holder-safe-balance",
+          "map-token-supply",
+          "map-treasury-balance",
+          "map-staking-balance",
+          "map-vesting-balance",
+          "map-safe-balance"
+        ].forEach((id) => setLiveText(id, "Error loading"));
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const refreshButton = document.getElementById("refresh-live-data");
+      if (refreshButton) {
+        refreshButton.addEventListener("click", loadLiveDataPage);
+      }
+
+      loadLiveDataPage();
+    });
+  </script>
+</body>
+</html>
