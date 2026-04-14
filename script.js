@@ -153,7 +153,28 @@ async function initDashboard() {
     refreshButton.addEventListener("click", loadDashboard);
   }
 }
+async function loadProtocolBalances() {
+  const provider = new ethers.JsonRpcProvider(LIVE_CONFIG.rpc);
 
+  const abi = [
+    "function balanceOf(address) view returns (uint256)"
+  ];
+
+  const token = new ethers.Contract(LIVE_CONFIG.infl, abi, provider);
+
+  const vault = await token.balanceOf(LIVE_CONFIG.stakingVault);
+  const treasury = await token.balanceOf(LIVE_CONFIG.treasury);
+  const safe = await token.balanceOf(LIVE_CONFIG.protocolSafe);
+
+  document.getElementById("vault-balance").textContent =
+    ethers.formatUnits(vault, 18) + " INFL";
+
+  document.getElementById("treasury-balance").textContent =
+    ethers.formatUnits(treasury, 18) + " INFL";
+
+  document.getElementById("safe-balance").textContent =
+    ethers.formatUnits(safe, 18) + " INFL";
+}
 async function loadDashboard() {
   const supplyEl = document.getElementById("supply");
   const cpiEl = document.getElementById("cpi");
