@@ -234,7 +234,7 @@ async function loadDashboard() {
     if (emissionsEl) emissionsEl.textContent = "Error loading";
   }
 }
-
+loadProtocolBalances();
 function setDashboardLoadingState() {
   const supplyEl = document.getElementById("supply");
   const cpiEl = document.getElementById("cpi");
