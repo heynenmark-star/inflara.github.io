@@ -4,13 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Inflara | Live Data</title>
+  <meta
+    name="description"
+    content="Live protocol data for Inflara including supply, CPI input, staking vault, treasury, and epoch-linked metrics."
+  />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
 </head>
 <body>
   <canvas id="starfield"></canvas>
 
-  <!-- NAVIGATION -->
   <header class="topbar">
     <div class="nav-brand">
       <a href="index.html">INFLARA</a>
@@ -23,18 +26,223 @@
       <a href="live-data.html">Live Data</a>
       <a href="staking.html">Staking</a>
       <a href="index.html#buy">Buy</a>
-      <a href="docs.html">Docs</a>
+      <a href="index.html#docs">Docs</a>
       <a href="chat.html">Chat</a>
     </nav>
   </header>
 
-  <!-- HERO -->
-  <section class="hero fade-in">
-    <h1>Live Data</h1>
-    <p class="subtitle">Protocol state, tracked balances, and treasury-linked visualisation.</p>
-    <p class="intro">
-      Monitor the current Inflara supply, CPI input, projected epoch emissions,
-      and the balances of key project wallets and contracts.
+  <main>
+    <section class="hero fade-in">
+      <h1>Live Data</h1>
+      <p class="subtitle">
+        Protocol state, tracked balances, and rule-based monetary signals.
+      </p>
+      <p class="intro">
+        Monitor the current Inflara supply, CPI reference, epoch-linked output,
+        staking vault position, and treasury-linked metrics in one place.
+      </p>
+
+      <div class="hero-buttons">
+        <a href="#core-metrics" class="button">View Core Metrics</a>
+        <a href="index.html" class="button secondary">Back to Home</a>
+      </div>
+    </section>
+
+    <section id="core-metrics" class="section fade-in">
+      <h2>Core Protocol Metrics</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="live-total-supply">Loading...</div>
+          <div class="stat-label">Total Supply</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" id="live-circulating-supply">Loading...</div>
+          <div class="stat-label">Circulating Supply</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" id="live-cpi">Loading...</div>
+          <div class="stat-label">Current CPI</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" id="live-epoch-emissions">Loading...</div>
+          <div class="stat-label">Epoch Emissions</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section fade-in">
+      <h2>Staking and Treasury</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="live-staking-vault">Loading...</div>
+          <div class="stat-label">Staking Vault</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" id="live-staked-supply">Loading...</div>
+          <div class="stat-label">Total Staked</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" id="live-treasury-infl">Loading...</div>
+          <div class="stat-label">Treasury INFL</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number" id="live-treasury-eth">Loading...</div>
+          <div class="stat-label">Treasury ETH</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section fade-in">
+      <h2>Policy View</h2>
+
+      <div class="columns">
+        <div class="column">
+          <h3>Monthly Rule Cycle</h3>
+          <p>
+            Inflara evaluates macro input on a fixed epoch schedule rather than
+            through discretionary intervention.
+          </p>
+        </div>
+
+        <div class="column">
+          <h3>Bounded Adjustment</h3>
+          <p>
+            Supply output is designed to remain constrained, gradual, and auditable.
+          </p>
+        </div>
+
+        <div class="column">
+          <h3>Default to Restraint</h3>
+          <p>
+            When signal quality is weak or uncertain, the system favors inaction
+            over forced response.
+          </p>
+        </div>
+      </div>
+
+      <div class="protocol-map">
+        <div class="node">
+          <h3>CPI Input</h3>
+          <p id="flow-cpi">Loading...</p>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node">
+          <h3>Policy Engine</h3>
+          <p>Rule-Based Logic</p>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node">
+          <h3>Epoch Output</h3>
+          <p id="flow-output">Loading...</p>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node">
+          <h3>Treasury / Stakers</h3>
+          <p id="flow-distribution">Loading...</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section muted fade-in">
+      <h2>Reference Prices</h2>
+
+      <ul class="prices">
+        <li>
+          Bitcoin:
+          <span id="btc-price">—</span>
+          <a href="https://www.tradingview.com/symbols/BTCUSD/" target="_blank" rel="noopener">view</a>
+        </li>
+        <li>
+          Gold:
+          <a href="https://www.tradingview.com/symbols/TVC-GOLD/" target="_blank" rel="noopener">TradingView</a>
+        </li>
+        <li>
+          Silver:
+          <a href="https://www.tradingview.com/symbols/TVC-SILVER/" target="_blank" rel="noopener">TradingView</a>
+        </li>
+      </ul>
+
+      <p class="note">
+        Reference assets are displayed for context only. Inflara’s policy logic remains
+        constrained and auditable.
+      </p>
+    </section>
+
+    <section class="section fade-in">
+      <h2>Live Dashboard Panel</h2>
+
+      <div id="dashboard" class="dashboard-box">
+        <div class="dashboard-rows">
+          <div class="dashboard-row">
+            <span>Total Supply</span>
+            <strong id="panel-total-supply">Loading...</strong>
+          </div>
+
+          <div class="dashboard-row">
+            <span>Circulating Supply</span>
+            <strong id="panel-circulating-supply">Loading...</strong>
+          </div>
+
+          <div class="dashboard-row">
+            <span>CPI</span>
+            <strong id="panel-cpi">Loading...</strong>
+          </div>
+
+          <div class="dashboard-row">
+            <span>Epoch Emissions</span>
+            <strong id="panel-emissions">Loading...</strong>
+          </div>
+
+          <div class="dashboard-row">
+            <span>Staking Vault</span>
+            <strong id="panel-staking-vault">Loading...</strong>
+          </div>
+
+          <div class="dashboard-row">
+            <span>Treasury INFL</span>
+            <strong id="panel-treasury-infl">Loading...</strong>
+          </div>
+        </div>
+
+        <div class="dashboard-actions">
+          <button class="button-like" data-refresh-dashboard>Refresh Data</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section muted fade-in">
+      <h2>Notes</h2>
+      <ul>
+        <li>Some values may be testnet values while the protocol remains in deployment phase.</li>
+        <li>Displayed figures can be static, simulated, or contract-derived depending on current integration status.</li>
+        <li>Final production values should be sourced directly from the deployed contracts and approved data feeds.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Inflara live data is intended to make protocol state transparent, readable, and auditable.
+    </p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>      and the balances of key project wallets and contracts.
     </p>
   </section>
 <section class="section">
