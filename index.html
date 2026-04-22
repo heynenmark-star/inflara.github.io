@@ -3,38 +3,325 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Inflara | A Fair Crypto Currency</title>
+  <title>Inflara | A Fair Cryptocurrency</title>
+  <meta
+    name="description"
+    content="Inflara is a rule-based monetary protocol designed to respond to inflation mechanically, transparently, and without discretion."
+  />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
 </head>
 <body>
   <canvas id="starfield"></canvas>
 
-  <!-- NAVIGATION -->
   <header class="topbar">
     <div class="nav-brand">
       <a href="index.html">INFLARA</a>
     </div>
 
     <nav class="nav-links">
-      <a href="index.html">Home</a>
+      <a href="#home">Home</a>
       <a href="#how">How It Works</a>
       <a href="macro.html">Macro Dashboard</a>
       <a href="live-data.html">Live Data</a>
       <a href="staking.html">Staking</a>
       <a href="#buy">Buy</a>
-      <a href="docs.html">Docs</a>
+      <a href="#docs">Docs</a>
       <a href="chat.html">Chat</a>
     </nav>
   </header>
 
-  <!-- HERO -->
-  <section id="home" class="hero fade-in">
-    <img src="images/inflara-symbol.png" alt="Inflara Symbol" class="logo" />
-    <h1>Inflara</h1>
-    <p class="subtitle">
-      A monetary protocol that tracks inflation automatically.
+  <main>
+    <section id="home" class="hero fade-in">
+      <img src="images/inflara-symbol.png" alt="Inflara Symbol" class="logo" />
+      <h1>Inflara</h1>
+      <p class="subtitle">
+        A rule-based monetary protocol designed to respond to inflation automatically.
+      </p>
+      <p class="intro">
+        Inflara is built to protect savers through transparent, mechanical policy.
+        No discretion. No hidden interventions. No speculative complexity at the core.
+      </p>
+
+      <div class="hero-buttons">
+        <a href="#how" class="button">How It Works</a>
+        <a href="live-data.html" class="button secondary">View Live Data</a>
+        <a href="#buy" class="button secondary">Buy INFL</a>
+      </div>
+    </section>
+
+    <section class="section fade-in">
+      <h2>The Problem</h2>
+      <p>
+        Savings lose purchasing power when money expands faster than value.
+        Centralised monetary systems rely on discretion, delay, and opaque judgment.
+      </p>
+      <p>
+        Most digital assets do not solve this problem. They simply repackage volatility,
+        speculation, or leverage into a new wrapper.
+      </p>
+      <p>
+        Inflara is designed around a different principle: measured inputs, deterministic
+        rules, and constrained responses.
+      </p>
+    </section>
+
+    <section class="section fade-in">
+      <h2>Protocol Overview</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">100,000,000</div>
+          <div class="stat-label">Genesis Supply</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number">Monthly</div>
+          <div class="stat-label">Policy Cycle</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number">Rule-Based</div>
+          <div class="stat-label">Policy Engine</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-number">On-Chain</div>
+          <div class="stat-label">Transparent Logic</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="section fade-in">
+      <h2>How Inflara Works</h2>
+
+      <div class="diagram-card">
+        <img
+          src="System image.png"
+          alt="Inflara system architecture diagram showing economic inputs, core rule engine and constrained outputs"
+          class="diagram-image"
+        />
+      </div>
+
+      <div class="columns">
+        <div class="column">
+          <h3>Measurement</h3>
+          <p>
+            Inflation signals and monetary references are observed as system inputs.
+          </p>
+        </div>
+
+        <div class="column">
+          <h3>Rule Engine</h3>
+          <p>
+            Policy responses are determined mechanically by predefined logic, not by opinion.
+          </p>
+        </div>
+
+        <div class="column">
+          <h3>Constrained Output</h3>
+          <p>
+            Supply adjustments are bounded, gradual, auditable, and designed for stability.
+          </p>
+        </div>
+      </div>
+
+      <div class="protocol-map">
+        <div class="node">
+          <h3>Economic Inputs</h3>
+          <p>CPI, prices, monetary references</p>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node">
+          <h3>Inflara Core</h3>
+          <p>Deterministic policy logic</p>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node">
+          <h3>Supply Response</h3>
+          <p>Measured expansion or inaction</p>
+        </div>
+
+        <div class="arrow">↓</div>
+
+        <div class="node">
+          <h3>Saver Protection</h3>
+          <p>Long-term alignment over speculation</p>
+        </div>
+      </div>
+
+      <p class="note">
+        When inputs are uncertain or noisy, the system defaults toward restraint rather than forced action.
+      </p>
+    </section>
+
+    <section id="tokenomics" class="section fade-in">
+      <h2>Tokenomics</h2>
+
+      <div class="columns">
+        <div class="column">
+          <h3>Genesis Supply</h3>
+          <p>100,000,000 INFL</p>
+        </div>
+
+        <div class="column">
+          <h3>Adjustment Cycle</h3>
+          <p>Monthly epoch-based policy updates</p>
+        </div>
+
+        <div class="column">
+          <h3>Treasury</h3>
+          <p>Protocol participation under constrained rules</p>
+        </div>
+      </div>
+
+      <div class="columns">
+        <div class="column">
+          <h3>Founder Allocation</h3>
+          <p>Structured liquid allocation plus transparent vesting</p>
+        </div>
+
+        <div class="column">
+          <h3>Staking</h3>
+          <p>Designed to reward aligned, long-term holders</p>
+        </div>
+
+        <div class="column">
+          <h3>Governance</h3>
+          <p>Auditable participation with limited discretion</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section fade-in">
+      <h2>Saver Protection</h2>
+      <p>
+        Inflara is designed with savers as the primary stakeholder. The objective is not
+        maximum hype or maximum leverage. The objective is monetary reliability.
+      </p>
+
+      <div class="columns">
+        <div class="column">
+          <h3>Bitcoin</h3>
+          <p>Digital scarcity reference</p>
+        </div>
+
+        <div class="column">
+          <h3>Gold</h3>
+          <p>Monetary commodity reference</p>
+        </div>
+
+        <div class="column">
+          <h3>Silver</h3>
+          <p>Secondary monetary reference</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section muted fade-in">
+      <h2>Measurement References</h2>
+
+      <ul class="prices">
+        <li>
+          Bitcoin:
+          <span id="btc-price">—</span>
+          <a href="https://www.tradingview.com/symbols/BTCUSD/" target="_blank" rel="noopener">view</a>
+        </li>
+        <li>
+          Gold:
+          <a href="https://www.tradingview.com/symbols/TVC-GOLD/" target="_blank" rel="noopener">TradingView</a>
+        </li>
+        <li>
+          Silver:
+          <a href="https://www.tradingview.com/symbols/TVC-SILVER/" target="_blank" rel="noopener">TradingView</a>
+        </li>
+      </ul>
+
+      <p class="note">
+        These references are contextual inputs and visual guides, not discretionary controls.
+      </p>
+    </section>
+
+    <section id="buy" class="section fade-in center">
+      <h2>Buy INFL</h2>
+      <p>
+        Acquire ETH, connect your wallet, and swap through a supported decentralised exchange.
+      </p>
+
+      <div class="columns">
+        <div class="column">
+          <h3>Step 1</h3>
+          <p>Get ETH in your wallet.</p>
+        </div>
+
+        <div class="column">
+          <h3>Step 2</h3>
+          <p>Connect to the exchange interface.</p>
+        </div>
+
+        <div class="column">
+          <h3>Step 3</h3>
+          <p>Swap ETH for INFL.</p>
+        </div>
+      </div>
+
+      <a href="#" class="button">Buy on Uniswap</a>
+    </section>
+
+    <section id="data-preview" class="section fade-in">
+      <h2>Live Data Preview</h2>
+
+      <div id="dashboard" class="dashboard-box">
+        <p>Circulating Supply: <span id="supply">Loading...</span></p>
+        <p>CPI: <span id="cpi">Loading...</span></p>
+        <p>Epoch Emissions: <span id="emissions">Loading...</span></p>
+        <button data-refresh-dashboard>Refresh Data</button>
+      </div>
+
+      <div class="center" style="margin-top: 1.5rem;">
+        <a href="live-data.html" class="button secondary">Open Full Live Data Page</a>
+      </div>
+    </section>
+
+    <section class="section fade-in">
+      <h2>Phased Activation</h2>
+
+      <ul class="phases">
+        <li><strong>Phase 1:</strong> Measurement</li>
+        <li><strong>Phase 2:</strong> Constrained Response</li>
+        <li><strong>Phase 3:</strong> Saver Protection</li>
+      </ul>
+    </section>
+
+    <section class="section muted fade-in">
+      <h2>What Inflara Is Not</h2>
+      <ul>
+        <li>Not a lending protocol</li>
+        <li>Not a discretionary monetary committee</li>
+        <li>Not a high-yield promise machine</li>
+        <li>Not designed around speculation first</li>
+      </ul>
+    </section>
+
+    <section id="docs" class="section center fade-in">
+      <h2>Documentation</h2>
+      <a href="inflara-whitepaper.pdf" class="button">Read the White Paper</a>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Inflara is an open, rule-based monetary protocol designed to be constrained, auditable, and transparent.
     </p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>    </p>
     <p class="intro">
       Inflara is a rule-based system that responds to real-world inflation mechanically,
       without discretion, leverage, or speculative incentives.
