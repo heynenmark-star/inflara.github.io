@@ -5,7 +5,7 @@
 const APP_CONFIG = {
   rpc: "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_",
   contracts: {
-    infl: "0x393289f921bbE6A684B79B9939816AAE68AC1B60",
+    infl: "0x1123a7f41002610F7f121D0B993bC2DE85Daa7A3",
     engine: "0x7E267b43b11e312A4685Bb48Ab2B10c43dA1Ef1E",
     controller: "0x1EEC97996986B5D0196a68D341D0C2D2C6D1775B"
   },
