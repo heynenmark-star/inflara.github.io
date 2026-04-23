@@ -5,6 +5,7 @@
 const APP_CONFIG = {
   rpc: "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_",
   contracts: {
+    // IMPORTANT: replace this with your REAL active INFL token contract
     infl: "0x1123a7f41002610F7f121D0B993bC2DE85Daa7A3",
     engine: "0x7E267b43b11e312A4685Bb48Ab2B10c43dA1Ef1E",
     controller: "0x1EEC97996986B5D0196a68D341D0C2D2C6D1775B"
@@ -35,6 +36,308 @@ const ABI = {
 
 document.addEventListener("DOMContentLoaded", async () => {
   initFadeInObserver();
+  initStarfield();
+  await initDashboard();
+});
+
+// ==============================
+// HELPERS
+// ==============================
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function formatInfl(value) {
+  return `${Number(value).toLocaleString(undefined, {
+    maximumFractionDigits: 2
+  })} INFL`;
+}
+
+function formatEth(value) {
+  return `${Number(value).toLocaleString(undefined, {
+    maximumFractionDigits: 4
+  })} ETH`;
+}
+
+function formatPercentFromBps(bps) {
+  return `${(Number(bps) / 100).toFixed(2)}%`;
+}
+
+// ==============================
+// FADE-IN OBSERVER
+// ==============================
+
+function initFadeInObserver() {
+  const elements = document.querySelectorAll(".fade-in");
+  if (!elements.length) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.15 }
+  );
+
+  elements.forEach((element) => observer.observe(element));
+}
+
+// ==============================
+// STARFIELD BACKGROUND
+// ==============================
+
+let starfieldCanvas = null;
+let starfieldContext = null;
+let stars = [];
+let starAnimationStarted = false;
+
+function initStarfield() {
+  starfieldCanvas = document.getElementById("starfield");
+  if (!starfieldCanvas) return;
+
+  starfieldContext = starfieldCanvas.getContext("2d");
+  if (!starfieldContext) return;
+
+  resizeStarfield();
+  createStars();
+
+  if (!starAnimationStarted) {
+    starAnimationStarted = true;
+    requestAnimationFrame(drawStars);
+  }
+
+  window.addEventListener("resize", () => {
+    resizeStarfield();
+    createStars();
+  });
+}
+
+function resizeStarfield() {
+  if (!starfieldCanvas) return;
+  starfieldCanvas.width = window.innerWidth;
+  starfieldCanvas.height = window.innerHeight;
+}
+
+function createStars() {
+  if (!starfieldCanvas) return;
+
+  const count = Math.max(80, Math.floor(window.innerWidth / 12));
+  stars = [];
+
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x: Math.random() * starfieldCanvas.width,
+      y: Math.random() * starfieldCanvas.height,
+      radius: Math.random() * 1.6 + 0.2,
+      speed: Math.random() * 0.25 + 0.05,
+      opacity: Math.random() * 0.6 + 0.2
+    });
+  }
+}
+
+function drawStars() {
+  if (!starfieldCanvas || !starfieldContext) return;
+
+  starfieldContext.clearRect(0, 0, starfieldCanvas.width, starfieldCanvas.height);
+
+  for (const star of stars) {
+    starfieldContext.beginPath();
+    starfieldContext.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    starfieldContext.fillStyle = `rgba(255,255,255,${star.opacity})`;
+    starfieldContext.fill();
+
+    star.y += star.speed;
+
+    if (star.y > starfieldCanvas.height) {
+      star.y = -5;
+      star.x = Math.random() * starfieldCanvas.width;
+    }
+  }
+
+  requestAnimationFrame(drawStars);
+}
+
+// ==============================
+// DASHBOARD
+// ==============================
+
+async function initDashboard() {
+  const refreshButton = document.querySelector("[data-refresh-dashboard]");
+  if (refreshButton) {
+    refreshButton.addEventListener("click", loadDashboard);
+  }
+
+  await loadDashboard();
+}
+
+function setLoadingState() {
+  [
+    "supply",
+    "cpi",
+    "emissions",
+    "live-total-supply",
+    "live-circulating-supply",
+    "live-cpi",
+    "live-epoch-emissions",
+    "live-staking-vault",
+    "live-staked-supply",
+    "live-treasury-infl",
+    "live-treasury-eth",
+    "panel-total-supply",
+    "panel-circulating-supply",
+    "panel-cpi",
+    "panel-emissions",
+    "panel-staking-vault",
+    "panel-treasury-infl",
+    "flow-cpi",
+    "flow-output",
+    "flow-distribution"
+  ].forEach((id) => setText(id, "Loading..."));
+}
+
+function setFallbackState() {
+  const totalSupplyText = "100,530,627 INFL";
+  const circulatingText = "100,250,000 INFL";
+  const cpiText = "2.50%";
+  const emissionsText = "250,000 INFL";
+  const stakingVaultText = "0 INFL";
+  const totalStakedText = "0 INFL";
+  const treasuryInflText = "30,000 INFL";
+  const treasuryEthText = "0.0319 ETH";
+
+  setText("supply", circulatingText);
+  setText("cpi", cpiText);
+  setText("emissions", emissionsText);
+
+  setText("live-total-supply", totalSupplyText);
+  setText("live-circulating-supply", circulatingText);
+  setText("live-cpi", cpiText);
+  setText("live-epoch-emissions", emissionsText);
+  setText("live-staking-vault", stakingVaultText);
+  setText("live-staked-supply", totalStakedText);
+  setText("live-treasury-infl", treasuryInflText);
+  setText("live-treasury-eth", treasuryEthText);
+
+  setText("panel-total-supply", totalSupplyText);
+  setText("panel-circulating-supply", circulatingText);
+  setText("panel-cpi", cpiText);
+  setText("panel-emissions", emissionsText);
+  setText("panel-staking-vault", stakingVaultText);
+  setText("panel-treasury-infl", treasuryInflText);
+
+  setText("flow-cpi", cpiText);
+  setText("flow-output", emissionsText);
+  setText("flow-distribution", "Stakers / Treasury");
+}
+
+async function loadDashboard() {
+  try {
+    setLoadingState();
+
+    if (typeof ethers === "undefined") {
+      throw new Error("ethers not loaded");
+    }
+
+    if (
+      !APP_CONFIG.contracts.infl ||
+      APP_CONFIG.contracts.infl.includes("REPLACE_THIS")
+    ) {
+      throw new Error("Token address not set");
+    }
+
+    const provider = new ethers.JsonRpcProvider(APP_CONFIG.rpc);
+
+    const token = new ethers.Contract(
+      APP_CONFIG.contracts.infl,
+      ABI.token,
+      provider
+    );
+
+    const engine = new ethers.Contract(
+      APP_CONFIG.contracts.engine,
+      ABI.engine,
+      provider
+    );
+
+    const controller = new ethers.Contract(
+      APP_CONFIG.contracts.controller,
+      ABI.controller,
+      provider
+    );
+
+    const [
+      rawSupply,
+      rawCpi,
+      preview,
+      decimals,
+      rawTreasuryInfl,
+      rawTreasuryEth
+    ] = await Promise.all([
+      token.totalSupply(),
+      engine.currentCPIBps(),
+      controller.previewEpoch(),
+      token.decimals(),
+      token.balanceOf(APP_CONFIG.addresses.treasurySafe),
+      provider.getBalance(APP_CONFIG.addresses.treasurySafe)
+    ]);
+
+    const totalSupply = Number(ethers.formatUnits(rawSupply, decimals));
+    const cpiText = formatPercentFromBps(rawCpi);
+
+    const mintTotal = preview.mintTotal ?? preview[2];
+    const toStakers = preview.toStakers ?? preview[3];
+    const toTreasury = preview.toTreasury ?? preview[4];
+
+    const epochEmissions = Number(ethers.formatUnits(mintTotal, decimals));
+    const treasuryInfl = Number(ethers.formatUnits(rawTreasuryInfl, decimals));
+    const treasuryEth = Number(ethers.formatEther(rawTreasuryEth));
+
+    const stakingVault = 0;
+    const totalStaked = Number(ethers.formatUnits(toStakers, decimals));
+    const circulatingSupply = totalSupply - treasuryInfl - stakingVault;
+
+    const totalSupplyText = formatInfl(totalSupply);
+    const circulatingSupplyText = formatInfl(circulatingSupply);
+    const epochEmissionsText = formatInfl(epochEmissions);
+    const stakingVaultText = formatInfl(stakingVault);
+    const totalStakedText = formatInfl(totalStaked);
+    const treasuryInflText = formatInfl(treasuryInfl);
+    const treasuryEthText = formatEth(treasuryEth);
+    const toTreasuryText = formatInfl(Number(ethers.formatUnits(toTreasury, decimals)));
+
+    setText("supply", circulatingSupplyText);
+    setText("cpi", cpiText);
+    setText("emissions", epochEmissionsText);
+
+    setText("live-total-supply", totalSupplyText);
+    setText("live-circulating-supply", circulatingSupplyText);
+    setText("live-cpi", cpiText);
+    setText("live-epoch-emissions", epochEmissionsText);
+    setText("live-staking-vault", stakingVaultText);
+    setText("live-staked-supply", totalStakedText);
+    setText("live-treasury-infl", treasuryInflText);
+    setText("live-treasury-eth", treasuryEthText);
+
+    setText("panel-total-supply", totalSupplyText);
+    setText("panel-circulating-supply", circulatingSupplyText);
+    setText("panel-cpi", cpiText);
+    setText("panel-emissions", epochEmissionsText);
+    setText("panel-staking-vault", stakingVaultText);
+    setText("panel-treasury-infl", treasuryInflText);
+
+    setText("flow-cpi", cpiText);
+    setText("flow-output", epochEmissionsText);
+    setText("flow-distribution", `Stakers: ${totalStakedText} / Treasury: ${toTreasuryText}`);
+  } catch (error) {
+    console.error("Dashboard load error:", error);
+    setFallbackState();
+  }
+}  initFadeInObserver();
   initStarfield();
   await initDashboard();
 });
