@@ -1,6 +1,6 @@
 :root {
   --bg: #0e1117;
-  --bg-deep: #050812;
+  --bg-deep: #0b0f18;
   --fg: #e6e8eb;
   --muted: #9aa0a6;
   --accent: #d4af37;
@@ -28,13 +28,237 @@ body {
   color: var(--fg);
   line-height: 1.6;
   overflow-x: hidden;
-  background: linear-gradient(to bottom, #030611, #0b0f18 45%, #0e1117);
+
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 1px, transparent 2px),
+    radial-gradient(circle at 70% 20%, rgba(255,255,255,0.5) 1px, transparent 2px),
+    radial-gradient(circle at 40% 80%, rgba(255,255,255,0.6) 1px, transparent 2px),
+    radial-gradient(circle at 85% 60%, rgba(255,255,255,0.4) 1px, transparent 2px),
+    radial-gradient(circle at 10% 75%, rgba(255,255,255,0.5) 1px, transparent 2px),
+    linear-gradient(to bottom, var(--bg-deep), var(--bg));
+
+  background-size:
+    300px 300px,
+    400px 400px,
+    500px 500px,
+    350px 350px,
+    450px 450px,
+    100% 100%;
+
+  animation: starMove 80s linear infinite;
 }
 
-/* Milky Way Background */
+@keyframes starMove {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
 
-body::before {
-  content: "";
+  to {
+    background-position:
+      0 -300px,
+      0 -400px,
+      0 -500px,
+      0 -350px,
+      0 -450px,
+      0 0;
+  }
+}
+
+/* Disable old canvas */
+#starfield {
+  display: none;
+}
+
+/* Layout */
+
+section {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem;
+}
+
+.section.muted {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.center {
+  text-align: center;
+}
+
+/* Navigation */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(3, 8, 20, 0.78);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-gold);
+}
+
+.nav-brand a {
+  text-decoration: none;
+  color: var(--accent-soft);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+}
+
+.nav-links {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #e7eaf3;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.nav-links a:hover {
+  color: var(--accent-soft);
+}
+
+/* Hero */
+
+.hero {
+  text-align: center;
+  padding-top: 5rem;
+  padding-bottom: 4.5rem;
+}
+
+/* Logo */
+
+.logo {
+  width: 180px;
+  margin: 0 auto 20px;
+  display: block;
+  opacity: 0.96;
+  animation: floatLogo 6s ease-in-out infinite;
+}
+
+@keyframes floatLogo {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Typography */
+
+h1 {
+  font-size: 4rem;
+}
+
+h2 {
+  font-size: 2.4rem;
+}
+
+.subtitle {
+  color: var(--muted);
+}
+
+/* Buttons */
+
+.button {
+  padding: 12px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.08);
+  color: #f7f2dc;
+  text-decoration: none;
+}
+
+.button:hover {
+  background: rgba(212, 175, 55, 0.14);
+}
+
+/* Cards */
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.column {
+  background: var(--panel-strong);
+  padding: 1.4rem;
+  border-radius: 18px;
+}
+
+/* Stats */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.stat-card {
+  background: var(--panel-strong);
+  border-radius: 18px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--border-gold);
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  color: var(--accent-soft);
+}
+
+.stat-label {
+  color: var(--muted);
+}
+
+/* Footer */
+
+footer {
+  text-align: center;
+  padding: 2rem;
+  color: var(--muted);
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .topbar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+  }
+}  content: "";
   position: fixed;
   inset: 0;
   z-index: -3;
