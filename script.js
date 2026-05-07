@@ -1,18 +1,12 @@
-// ==============================
-// GLOBAL CONFIG
-// ==============================
-
 const APP_CONFIG = {
+  chainIdHex: "0xaa36a7",
+  chainName: "Sepolia",
   rpc: "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_",
   contracts: {
-    // IMPORTANT: replace this with your REAL active INFL token contract
-    infl: "0x1123a7f41002610F7f121D0B993bC2DE85Daa7A3",
+    infl: "0x393289f921bbE6A684B79B9939816AAE68AC1B60",
+    stakingVault: "0x1EEC97996986B5D0196a68D341D0C2D2C6D1775B",
     engine: "0x7E267b43b11e312A4685Bb48Ab2B10c43dA1Ef1E",
     controller: "0x1EEC97996986B5D0196a68D341D0C2D2C6D1775B"
-  },
-  addresses: {
-    treasurySafe: "0x7E267b43b11e312A4685Bb48Ab2B10c43dA1Ef1E",
-    stakingVault: "0x0000000000000000000000000000000000000000"
   }
 };
 
@@ -20,21 +14,317 @@ const ABI = {
   token: [
     "function totalSupply() view returns (uint256)",
     "function balanceOf(address owner) view returns (uint256)",
+    "function allowance(address owner, address spender) view returns (uint256)",
+    "function approve(address spender, uint256 amount) returns (bool)",
     "function decimals() view returns (uint8)"
   ],
+
+  stakingVault: [
+    "function stake(uint256 amount)",
+    "function withdraw(uint256 amount)",
+    "function claimRewards()",
+    "function exit()",
+    "function balanceOf(address account) view returns (uint256)",
+    "function earned(address account) view returns (uint256)",
+    "function totalStaked() view returns (uint256)",
+    "function rewardDistributor() view returns (address)"
+  ],
+
   engine: [
     "function currentCPIBps() view returns (uint256)"
   ],
+
   controller: [
     "function previewEpoch() view returns (uint256 cpiBps, uint256 annualRateBps, uint256 mintTotal, uint256 toStakers, uint256 toTreasury)"
   ]
 };
+
+let connectedProvider;
+let connectedSigner;
+let connectedAddress;
 
 // ==============================
 // APP INIT
 // ==============================
 
 document.addEventListener("DOMContentLoaded", async () => {
+  initFadeInObserver();
+  bindStakingButtons();
+
+  if (document.getElementById("wallet-address")) {
+    await refreshStakingUi();
+  }
+});
+
+// ==============================
+// HELPERS
+// ==============================
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function setStatus(message) {
+  setText("staking-status", message);
+}
+
+function formatInfl(value) {
+  return `${Number(value).toLocaleString(undefined, {
+    maximumFractionDigits: 6
+  })} INFL`;
+}
+
+function parseInflAmount(inputId) {
+  const el = document.getElementById(inputId);
+  const value = el?.value;
+
+  if (!value || Number(value) <= 0) {
+    throw new Error("Enter an amount greater than 0");
+  }
+
+  return ethers.parseUnits(value, 18);
+}
+
+function shortAddress(address) {
+  if (!address) return "Not connected";
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+async function getReadProvider() {
+  return new ethers.JsonRpcProvider(APP_CONFIG.rpc);
+}
+
+async function getWalletProvider() {
+  if (!window.ethereum) {
+    throw new Error("No wallet found. Open with Rabby or MetaMask installed.");
+  }
+
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  return provider;
+}
+
+async function ensureSepolia() {
+  if (!window.ethereum) return;
+
+  const currentChain = await window.ethereum.request({ method: "eth_chainId" });
+
+  if (currentChain !== APP_CONFIG.chainIdHex) {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: APP_CONFIG.chainIdHex }]
+    });
+  }
+}
+
+// ==============================
+// WALLET / STAKING
+// ==============================
+
+function bindStakingButtons() {
+  document.getElementById("connect-wallet")?.addEventListener("click", connectWallet);
+  document.getElementById("refresh-staking")?.addEventListener("click", refreshStakingUi);
+  document.getElementById("approve-infl")?.addEventListener("click", approveInfl);
+  document.getElementById("stake-infl")?.addEventListener("click", stakeInfl);
+  document.getElementById("claim-rewards")?.addEventListener("click", claimRewards);
+  document.getElementById("withdraw-infl")?.addEventListener("click", withdrawInfl);
+  document.getElementById("exit-staking")?.addEventListener("click", exitStaking);
+}
+
+async function connectWallet() {
+  try {
+    setStatus("Connecting wallet...");
+    await ensureSepolia();
+
+    connectedProvider = await getWalletProvider();
+    await connectedProvider.send("eth_requestAccounts", []);
+
+    connectedSigner = await connectedProvider.getSigner();
+    connectedAddress = await connectedSigner.getAddress();
+
+    setText("wallet-address", connectedAddress);
+    setText("wallet-network", APP_CONFIG.chainName);
+    setStatus("Wallet connected.");
+
+    await refreshStakingUi();
+  } catch (error) {
+    console.error(error);
+    setStatus(error.message || "Wallet connection failed.");
+  }
+}
+
+async function getConnectedContracts() {
+  if (!connectedSigner) {
+    await connectWallet();
+  }
+
+  const token = new ethers.Contract(
+    APP_CONFIG.contracts.infl,
+    ABI.token,
+    connectedSigner
+  );
+
+  const vault = new ethers.Contract(
+    APP_CONFIG.contracts.stakingVault,
+    ABI.stakingVault,
+    connectedSigner
+  );
+
+  return { token, vault };
+}
+
+async function refreshStakingUi() {
+  try {
+    const provider = await getReadProvider();
+
+    const token = new ethers.Contract(
+      APP_CONFIG.contracts.infl,
+      ABI.token,
+      provider
+    );
+
+    const vault = new ethers.Contract(
+      APP_CONFIG.contracts.stakingVault,
+      ABI.stakingVault,
+      provider
+    );
+
+    const user = connectedAddress;
+
+    if (!user) {
+      setText("wallet-address", "Not connected");
+      setText("wallet-network", "Sepolia");
+      setText("wallet-infl-balance", "—");
+      setText("vault-user-staked", "—");
+      setText("vault-earned", "—");
+      const totalStaked = await vault.totalStaked();
+      setText("vault-total-staked", formatInfl(ethers.formatUnits(totalStaked, 18)));
+      return;
+    }
+
+    const [walletBal, staked, earned, totalStaked] = await Promise.all([
+      token.balanceOf(user),
+      vault.balanceOf(user),
+      vault.earned(user),
+      vault.totalStaked()
+    ]);
+
+    setText("wallet-address", connectedAddress);
+    setText("wallet-network", APP_CONFIG.chainName);
+    setText("wallet-infl-balance", formatInfl(ethers.formatUnits(walletBal, 18)));
+    setText("vault-user-staked", formatInfl(ethers.formatUnits(staked, 18)));
+    setText("vault-earned", formatInfl(ethers.formatUnits(earned, 18)));
+    setText("vault-total-staked", formatInfl(ethers.formatUnits(totalStaked, 18)));
+  } catch (error) {
+    console.error(error);
+    setStatus("Could not refresh staking data.");
+  }
+}
+
+async function approveInfl() {
+  try {
+    const amount = parseInflAmount("stake-amount");
+    const { token } = await getConnectedContracts();
+
+    setStatus("Approving INFL...");
+    const tx = await token.approve(APP_CONFIG.contracts.stakingVault, amount);
+    await tx.wait();
+
+    setStatus("Approval confirmed.");
+    await refreshStakingUi();
+  } catch (error) {
+    console.error(error);
+    setStatus(error.reason || error.message || "Approval failed.");
+  }
+}
+
+async function stakeInfl() {
+  try {
+    const amount = parseInflAmount("stake-amount");
+    const { vault } = await getConnectedContracts();
+
+    setStatus("Staking INFL...");
+    const tx = await vault.stake(amount);
+    await tx.wait();
+
+    setStatus("Stake confirmed.");
+    await refreshStakingUi();
+  } catch (error) {
+    console.error(error);
+    setStatus(error.reason || error.message || "Stake failed.");
+  }
+}
+
+async function claimRewards() {
+  try {
+    const { vault } = await getConnectedContracts();
+
+    setStatus("Claiming rewards...");
+    const tx = await vault.claimRewards();
+    await tx.wait();
+
+    setStatus("Rewards claimed.");
+    await refreshStakingUi();
+  } catch (error) {
+    console.error(error);
+    setStatus(error.reason || error.message || "Claim failed.");
+  }
+}
+
+async function withdrawInfl() {
+  try {
+    const amount = parseInflAmount("withdraw-amount");
+    const { vault } = await getConnectedContracts();
+
+    setStatus("Withdrawing INFL...");
+    const tx = await vault.withdraw(amount);
+    await tx.wait();
+
+    setStatus("Withdraw confirmed.");
+    await refreshStakingUi();
+  } catch (error) {
+    console.error(error);
+    setStatus(error.reason || error.message || "Withdraw failed.");
+  }
+}
+
+async function exitStaking() {
+  try {
+    const { vault } = await getConnectedContracts();
+
+    setStatus("Exiting staking...");
+    const tx = await vault.exit();
+    await tx.wait();
+
+    setStatus("Exit confirmed.");
+    await refreshStakingUi();
+  } catch (error) {
+    console.error(error);
+    setStatus(error.reason || error.message || "Exit failed.");
+  }
+}
+
+// ==============================
+// FADE-IN OBSERVER
+// ==============================
+
+function initFadeInObserver() {
+  const elements = document.querySelectorAll(".fade-in");
+  if (!elements.length) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.15 }
+  );
+
+  elements.forEach((element) => observer.observe(element));
+}document.addEventListener("DOMContentLoaded", async () => {
   initFadeInObserver();
   initStarfield();
   await initDashboard();
