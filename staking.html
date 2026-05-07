@@ -3,13 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Inflara | Staking</title>
+
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Ethers v6 -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
 </head>
+
 <body>
   <canvas id="starfield"></canvas>
 
+  <!-- NAVIGATION -->
   <header class="topbar">
     <div class="nav-brand">
       <a href="index.html">INFLARA</a>
@@ -27,14 +33,127 @@
     </nav>
   </header>
 
+  <!-- HERO -->
   <section class="hero fade-in">
     <h1>Staking</h1>
-    <p class="subtitle">Stake INFL, claim rewards, and withdraw from the Inflara vault.</p>
-    <p class="intro">Sepolia testnet staking interface.</p>
+
+    <p class="subtitle">
+      Stake INFL, claim rewards, and withdraw from the Inflara staking vault.
+    </p>
+
+    <p class="intro">
+      Sepolia testnet staking interface.
+    </p>
 
     <div class="hero-buttons">
-      <button id="connect-wallet" class="button">Connect Wallet</button>
-      <button id="refresh-staking" class="button secondary">Refresh</button>
+      <button id="connect-wallet" class="button" type="button">
+        Connect Wallet
+      </button>
+
+      <button id="refresh-staking" class="button secondary" type="button">
+        Refresh
+      </button>
+    </div>
+
+    <p class="note">
+      Wallet: <span id="wallet-address">Not connected</span>
+    </p>
+
+    <p class="note">
+      Network: <span id="wallet-network">—</span>
+    </p>
+  </section>
+
+  <!-- VAULT STATUS -->
+  <section class="section fade-in">
+    <h2>Vault Status</h2>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div id="wallet-infl-balance" class="stat-number">—</div>
+        <div class="stat-label">Wallet INFL</div>
+      </div>
+
+      <div class="stat-card">
+        <div id="vault-user-staked" class="stat-number">—</div>
+        <div class="stat-label">Your Staked INFL</div>
+      </div>
+
+      <div class="stat-card">
+        <div id="vault-earned" class="stat-number">—</div>
+        <div class="stat-label">Earned Rewards</div>
+      </div>
+
+      <div class="stat-card">
+        <div id="vault-total-staked" class="stat-number">—</div>
+        <div class="stat-label">Total Staked</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAKE -->
+  <section class="section fade-in">
+    <h2>Stake INFL</h2>
+
+    <div class="dashboard-box">
+      <label for="stake-amount">Amount to stake</label>
+
+      <input
+        id="stake-amount"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="100"
+      />
+
+      <div class="hero-buttons">
+        <button id="approve-infl" class="button" type="button">
+          Approve
+        </button>
+
+        <button id="stake-infl" class="button" type="button">
+          Stake
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WITHDRAW / CLAIM -->
+  <section class="section fade-in">
+    <h2>Withdraw / Claim</h2>
+
+    <div class="dashboard-box">
+      <label for="withdraw-amount">Amount to withdraw</label>
+
+      <input
+        id="withdraw-amount"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="50"
+      />
+
+      <div class="hero-buttons">
+        <button id="claim-rewards" class="button" type="button">
+          Claim Rewards
+        </button>
+
+        <button id="withdraw-infl" class="button secondary" type="button">
+          Withdraw
+        </button>
+
+        <button id="exit-staking" class="button secondary" type="button">
+          Exit All
+        </button>
+      </div>
+    </div>
+
+    <p class="note" id="staking-status">Ready.</p>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>      <button id="refresh-staking" class="button secondary">Refresh</button>
     </div>
 
     <p class="note">Wallet: <span id="wallet-address">Not connected</span></p>
