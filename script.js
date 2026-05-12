@@ -1,40 +1,40 @@
-const APP_CONFIG = {
-  chainIdHex: "0xaa36a7",
-  chainName: "Sepolia",
-  rpc: "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_",
-  contracts: {
-    infl: "0x393289f921bbE6A684B79B9939816AAE68AC1B60",
-    stakingVault: "0x1EEC97996986B5D0196a68D341D0C2D2C6D1775B",
-    engine: "0x7E267b43b11e312A4685Bb48Ab2B10c43dA1Ef1E",
-    controller: "0x1EEC97996986B5D0196a68D341D0C2D2C6D1775B"
+alert("script.js loaded");
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("connect-wallet");
+  const walletText = document.getElementById("wallet-address");
+  const statusText = document.getElementById("staking-status");
+
+  if (!btn) {
+    alert("Connect button not found");
+    return;
   }
-};
 
-const ABI = {
-  token: [
-    "function totalSupply() view returns (uint256)",
-    "function balanceOf(address owner) view returns (uint256)",
-    "function allowance(address owner, address spender) view returns (uint256)",
-    "function approve(address spender, uint256 amount) returns (bool)",
-    "function decimals() view returns (uint8)"
-  ],
+  btn.addEventListener("click", async () => {
+    try {
+      alert("Button clicked");
 
-  stakingVault: [
-    "function stake(uint256 amount)",
-    "function withdraw(uint256 amount)",
-    "function claimRewards()",
-    "function exit()",
-    "function balanceOf(address account) view returns (uint256)",
-    "function earned(address account) view returns (uint256)",
-    "function totalStaked() view returns (uint256)",
-    "function rewardDistributor() view returns (address)"
-  ],
+      if (!window.ethereum) {
+        alert("No wallet found. Open Rabby or MetaMask.");
+        return;
+      }
 
-  engine: [
-    "function currentCPIBps() view returns (uint256)"
-  ],
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts"
+      });
 
-  controller: [
+      const account = accounts[0];
+
+      if (walletText) walletText.textContent = account;
+      if (statusText) statusText.textContent = "Wallet connected.";
+
+      alert("Connected: " + account);
+    } catch (err) {
+      console.error(err);
+      alert("Connection failed: " + err.message);
+    }
+  });
+});  controller: [
     "function previewEpoch() view returns (uint256 cpiBps, uint256 annualRateBps, uint256 mintTotal, uint256 toStakers, uint256 toTreasury)"
   ]
 };
