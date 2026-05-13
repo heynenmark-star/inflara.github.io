@@ -307,6 +307,4 @@ function initStarfield() {
   window.addEventListener("resize", resize);
   draw();
 }
-  <script src="./script.js?v=staking-live-2"></script>
-</body>
-</html>
+
