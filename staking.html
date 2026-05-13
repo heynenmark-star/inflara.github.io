@@ -102,6 +102,11 @@
   </section>
 
   <script>alert("staking page inline script works");</script>
-<script src="./script.js?v=staking-test-2"></script>
+
+  <script
+    src="./script.js?v=staking-test-3"
+    onload="alert('external script.js loaded')"
+    onerror="alert('external script.js FAILED to load')">
+  </script>
 </body>
 </html>
