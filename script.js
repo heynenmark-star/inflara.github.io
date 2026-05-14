@@ -34,6 +34,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindStakingButtons();
   await reconnectIfAlreadyConnected();
   await refreshStakingUi();
+
+  setInterval(async () => {
+    await refreshStakingUi();
+  }, 10000);
 });
 
 function setText(id, value) {
