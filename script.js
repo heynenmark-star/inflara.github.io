@@ -113,13 +113,40 @@ async function connectWallet() {
 
     setText("wallet-address", userAddress);
     setText("wallet-network", APP_CONFIG.chainName);
+
+    const connectBtn = document.getElementById("connect-wallet");
+
+    connectBtn.textContent =
+      userAddress.slice(0, 6) + "..." + userAddress.slice(-4);
+
+    connectBtn.onclick = disconnectWallet;
+
     setStatus("Wallet connected.");
 
     await refreshStakingUi();
+
   } catch (error) {
     console.error(error);
     setStatus(error.message || "Connection failed.");
   }
+}
+function disconnectWallet() {
+  provider = null;
+  signer = null;
+  userAddress = null;
+
+  setText("wallet-address", "Not connected");
+  setText("wallet-network", "—");
+  setText("wallet-infl-balance", "—");
+  setText("vault-user-staked", "—");
+  setText("vault-earned", "—");
+
+  const connectBtn = document.getElementById("connect-wallet");
+
+  connectBtn.textContent = "Connect Wallet";
+  connectBtn.onclick = connectWallet;
+
+  setStatus("Wallet disconnected.");
 }
 
 async function reconnectIfAlreadyConnected() {
