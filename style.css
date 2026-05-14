@@ -2555,6 +2555,11 @@ body {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.input-with-button input {
+  max-width: 260px;
 }
 
 .mini-button {
