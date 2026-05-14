@@ -13,7 +13,7 @@ const ABI = {
     "function balanceOf(address owner) view returns (uint256)",
     "function approve(address spender, uint256 amount) returns (bool)"
   ],
-  stakingVault: [
+  vault: [
     "function stake(uint256 amount)",
     "function withdraw(uint256 amount)",
     "function claimRewards()",
@@ -24,29 +24,34 @@ const ABI = {
   ]
 };
 
-let provider;
-let signer;
-let userAddress;
+let provider = null;
+let signer = null;
+let userAddress = null;
 let manuallyDisconnected = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
   initStarfield();
-  bindStakingButtons();
+  bindButtons();
+
   await reconnectIfAlreadyConnected();
   await refreshStakingUi();
 
-  setInterval(async () => {
-    await refreshStakingUi();
-  }, 10000);
+  setInterval(refreshStakingUi, 10000);
 });
 
+/* ---------------- Helpers ---------------- */
+
+function $(id) {
+  return document.getElementById(id);
+}
+
 function setText(id, value) {
-  const el = document.getElementById(id);
+  const el = $(id);
   if (el) el.textContent = value;
 }
 
-function setStatus(value) {
-  setText("staking-status", value);
+function setStatus(message) {
+  setText("staking-status", message);
 }
 
 function shortAddress(address) {
@@ -54,22 +59,24 @@ function shortAddress(address) {
 }
 
 function updateWalletButton() {
-  const connectBtn = document.getElementById("connect-wallet");
-  if (!connectBtn) return;
+  const btn = $("connect-wallet");
+  if (!btn) return;
 
-  connectBtn.textContent = userAddress
+  btn.textContent = userAddress
     ? `Disconnect ${shortAddress(userAddress)}`
     : "Connect Wallet";
 }
 
 function formatInfl(raw) {
-  return `${Number(ethers.formatUnits(raw, 18)).toLocaleString(undefined, {
+  const value = Number(ethers.formatUnits(raw, 18));
+
+  return `${value.toLocaleString(undefined, {
     maximumFractionDigits: 6
   })} INFL`;
 }
 
-function parseAmount(id) {
-  const value = document.getElementById(id)?.value;
+function parseAmount(inputId) {
+  const value = $(inputId)?.value;
 
   if (!value || Number(value) <= 0) {
     throw new Error("Enter an amount greater than 0");
@@ -78,12 +85,23 @@ function parseAmount(id) {
   return ethers.parseUnits(value, 18);
 }
 
+function setInputValue(id, value) {
+  const input = $(id);
+  if (input) input.value = value;
+}
+
+/* ---------------- Contracts ---------------- */
+
+function getReadProvider() {
+  return new ethers.JsonRpcProvider(APP_CONFIG.rpc);
+}
+
 async function getReadContracts() {
-  const readProvider = new ethers.JsonRpcProvider(APP_CONFIG.rpc);
+  const readProvider = getReadProvider();
 
   return {
     token: new ethers.Contract(APP_CONFIG.contracts.infl, ABI.token, readProvider),
-    vault: new ethers.Contract(APP_CONFIG.contracts.stakingVault, ABI.stakingVault, readProvider)
+    vault: new ethers.Contract(APP_CONFIG.contracts.stakingVault, ABI.vault, readProvider)
   };
 }
 
@@ -94,38 +112,35 @@ async function getWriteContracts() {
 
   return {
     token: new ethers.Contract(APP_CONFIG.contracts.infl, ABI.token, signer),
-    vault: new ethers.Contract(APP_CONFIG.contracts.stakingVault, ABI.stakingVault, signer)
+    vault: new ethers.Contract(APP_CONFIG.contracts.stakingVault, ABI.vault, signer)
   };
 }
+
+/* ---------------- Wallet ---------------- */
 
 async function ensureSepolia() {
   if (!window.ethereum) throw new Error("No wallet found");
 
   const chainId = await window.ethereum.request({ method: "eth_chainId" });
 
-  if (chainId !== APP_CONFIG.chainIdHex) {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: APP_CONFIG.chainIdHex }]
-    });
-  }
+  if (chainId === APP_CONFIG.chainIdHex) return;
+
+  await window.ethereum.request({
+    method: "wallet_switchEthereumChain",
+    params: [{ chainId: APP_CONFIG.chainIdHex }]
+  });
 }
 
-function bindStakingButtons() {
-  const oldConnectBtn = document.getElementById("connect-wallet");
+function bindButtons() {
+  bindWalletButton();
 
-  if (oldConnectBtn) {
-    const newConnectBtn = oldConnectBtn.cloneNode(true);
-    oldConnectBtn.parentNode.replaceChild(newConnectBtn, oldConnectBtn);
-    newConnectBtn.addEventListener("click", handleWalletButton);
-  }
-
-  document.getElementById("refresh-staking")?.addEventListener("click", refreshStakingUi);
-  document.getElementById("approve-infl")?.addEventListener("click", approveInfl);
-  document.getElementById("stake-infl")?.addEventListener("click", stakeInfl);
-  document.getElementById("claim-rewards")?.addEventListener("click", claimRewards);
-  document.getElementById("withdraw-infl")?.addEventListener("click", withdrawInfl);
-  document.getElementById("exit-staking")?.addEventListener("click", exitStaking);
+  $("refresh-staking")?.addEventListener("click", refreshStakingUi);
+  $("approve-infl")?.addEventListener("click", approveInfl);
+  $("stake-infl")?.addEventListener("click", stakeInfl);
+  $("claim-rewards")?.addEventListener("click", claimRewards);
+  $("withdraw-infl")?.addEventListener("click", withdrawInfl);
+  $("exit-staking")?.addEventListener("click", exitStaking);
+  $("max-stake")?.addEventListener("click", fillMaxStake);
 
   if (window.ethereum) {
     window.ethereum.on?.("accountsChanged", handleAccountsChanged);
@@ -133,18 +148,25 @@ function bindStakingButtons() {
   }
 }
 
-async function handleWalletButton() {
-  if (userAddress) {
-    disconnectWallet();
-  } else {
-    await connectWallet();
-  }
+function bindWalletButton() {
+  const oldBtn = $("connect-wallet");
+  if (!oldBtn) return;
+
+  const newBtn = oldBtn.cloneNode(true);
+  oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+
+  newBtn.addEventListener("click", async () => {
+    if (userAddress) {
+      disconnectWallet();
+    } else {
+      await connectWallet();
+    }
+  });
 }
 
 async function connectWallet() {
   try {
     manuallyDisconnected = false;
-
     setStatus("Connecting wallet...");
 
     await ensureSepolia();
@@ -159,7 +181,6 @@ async function connectWallet() {
     setText("wallet-network", APP_CONFIG.chainName);
 
     updateWalletButton();
-
     setStatus("Wallet connected.");
 
     await refreshStakingUi();
@@ -183,25 +204,17 @@ function disconnectWallet() {
   setText("vault-earned", "—");
 
   updateWalletButton();
-
   setStatus("Wallet disconnected.");
 }
 
 async function reconnectIfAlreadyConnected() {
   try {
-    if (manuallyDisconnected) {
+    if (manuallyDisconnected || !window.ethereum) {
       updateWalletButton();
       return;
     }
 
-    if (!window.ethereum) {
-      updateWalletButton();
-      return;
-    }
-
-    const accounts = await window.ethereum.request({
-      method: "eth_accounts"
-    });
+    const accounts = await window.ethereum.request({ method: "eth_accounts" });
 
     if (!accounts.length) {
       updateWalletButton();
@@ -218,7 +231,6 @@ async function reconnectIfAlreadyConnected() {
     setText("wallet-network", APP_CONFIG.chainName);
 
     updateWalletButton();
-
     setStatus("Wallet connected.");
   } catch (error) {
     console.error(error);
@@ -242,14 +254,16 @@ async function handleAccountsChanged(accounts) {
   setText("wallet-network", APP_CONFIG.chainName);
 
   updateWalletButton();
-
   setStatus("Wallet changed.");
+
   await refreshStakingUi();
 }
 
+/* ---------------- UI Data ---------------- */
+
 async function refreshStakingUi() {
   try {
-    if (!document.getElementById("vault-total-staked")) return;
+    if (!$("vault-total-staked")) return;
 
     const { token, vault } = await getReadContracts();
 
@@ -281,13 +295,29 @@ async function refreshStakingUi() {
   }
 }
 
+async function fillMaxStake() {
+  try {
+    if (!userAddress) await connectWallet();
+
+    const { token } = await getReadContracts();
+    const balance = await token.balanceOf(userAddress);
+
+    setInputValue("stake-amount", Number(ethers.formatUnits(balance, 18)).toFixed(6));
+    setStatus("Max stake amount filled.");
+  } catch (error) {
+    console.error(error);
+    setStatus("Could not fetch max balance.");
+  }
+}
+
+/* ---------------- Transactions ---------------- */
+
 async function approveInfl() {
   try {
     const amount = parseAmount("stake-amount");
     const { token } = await getWriteContracts();
 
     setStatus("Approving INFL...");
-
     const tx = await token.approve(APP_CONFIG.contracts.stakingVault, amount);
     await tx.wait();
 
@@ -305,7 +335,6 @@ async function stakeInfl() {
     const { vault } = await getWriteContracts();
 
     setStatus("Staking INFL...");
-
     const tx = await vault.stake(amount);
     await tx.wait();
 
@@ -322,7 +351,6 @@ async function claimRewards() {
     const { vault } = await getWriteContracts();
 
     setStatus("Claiming rewards...");
-
     const tx = await vault.claimRewards();
     await tx.wait();
 
@@ -340,7 +368,6 @@ async function withdrawInfl() {
     const { vault } = await getWriteContracts();
 
     setStatus("Withdrawing INFL...");
-
     const tx = await vault.withdraw(amount);
     await tx.wait();
 
@@ -357,7 +384,6 @@ async function exitStaking() {
     const { vault } = await getWriteContracts();
 
     setStatus("Exiting staking...");
-
     const tx = await vault.exit();
     await tx.wait();
 
@@ -369,8 +395,10 @@ async function exitStaking() {
   }
 }
 
+/* ---------------- Starfield ---------------- */
+
 function initStarfield() {
-  const canvas = document.getElementById("starfield");
+  const canvas = $("starfield");
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
