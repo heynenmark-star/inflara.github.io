@@ -2551,3 +2551,22 @@ body {
 #starfield {
   display: none;
 }
+.input-with-button {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.mini-button {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #d4af37;
+  background: transparent;
+  color: #d4af37;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.mini-button:hover {
+  background: rgba(212, 175, 55, 0.12);
+}
