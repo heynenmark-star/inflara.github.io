@@ -13,8 +13,6 @@
 <body>
   <canvas id="starfield"></canvas>
 
-  <div id="toast-root" class="toast-root"></div>
-
   <header class="topbar">
     <div class="nav-brand">
       <a href="index.html">INFLARA</a>
@@ -37,153 +35,6 @@
       <h1>Staking</h1>
 
       <p class="subtitle">
-        Stake INFL, claim rewards, and withdraw from the Inflara staking vault.
-      </p>
-
-      <p class="intro">
-        Sepolia testnet staking interface.
-      </p>
-
-      <div class="hero-buttons">
-        <button id="connect-wallet" class="button" type="button">
-          Connect Wallet
-        </button>
-
-        <button id="refresh-staking" class="button secondary" type="button">
-          Refresh
-        </button>
-      </div>
-
-      <p class="note">
-        Wallet: <span id="wallet-address">Not connected</span>
-      </p>
-
-      <p class="note">
-        Network: <span id="wallet-network">—</span>
-      </p>
-    </section>
-
-    <section class="section fade-in">
-      <h2>Vault Status</h2>
-
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div id="wallet-infl-balance" class="stat-number">—</div>
-          <div class="stat-label">Wallet INFL</div>
-        </div>
-
-        <div class="stat-card">
-          <div id="vault-user-staked" class="stat-number">—</div>
-          <div class="stat-label">Your Staked INFL</div>
-        </div>
-
-        <div class="stat-card">
-          <div id="vault-earned" class="stat-number">—</div>
-          <div class="stat-label">Earned Rewards</div>
-        </div>
-
-        <div class="stat-card">
-          <div id="vault-total-staked" class="stat-number">—</div>
-          <div class="stat-label">Total Staked</div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section fade-in">
-      <h2>Stake INFL</h2>
-
-      <div class="dashboard-box">
-        <div class="stake-controls">
-          <label for="stake-amount">Amount to stake</label>
-
-          <div class="input-with-button">
-            <input
-              id="stake-amount"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="100"
-            />
-
-            <button id="max-stake" class="mini-button" type="button">
-              MAX
-            </button>
-          </div>
-
-          <div class="slider-section">
-            <div class="slider-header">
-              <span>Stake Percentage</span>
-              <strong id="slider-percent">0%</strong>
-            </div>
-
-            <input
-              id="stake-slider"
-              type="range"
-              min="0"
-              max="100"
-              value="0"
-              step="1"
-            />
-
-            <div class="slider-labels">
-              <span>0%</span>
-              <span>25%</span>
-              <span>50%</span>
-              <span>75%</span>
-              <span>100%</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="hero-buttons">
-          <button id="approve-infl" class="button tx-button" type="button">
-            Approve
-          </button>
-
-          <button id="stake-infl" class="button tx-button" type="button">
-            Stake
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <section class="section fade-in">
-      <h2>Withdraw / Claim</h2>
-
-      <div class="dashboard-box">
-        <label for="withdraw-amount">Amount to withdraw</label>
-
-        <input
-          id="withdraw-amount"
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="50"
-        />
-
-        <div class="hero-buttons">
-          <button id="claim-rewards" class="button tx-button" type="button">
-            Claim Rewards
-          </button>
-
-          <button id="withdraw-infl" class="button secondary tx-button" type="button">
-            Withdraw
-          </button>
-
-          <button id="exit-staking" class="button secondary tx-button" type="button">
-            Exit All
-          </button>
-        </div>
-      </div>
-
-      <p class="note" id="staking-status">Ready.</p>
-      <p class="note" id="tx-link-area"></p>
-    </section>
-  </main>
-
-  <script src="./script.js?v=staking-live-13"></script>
-</body>
-</html>      <p class="subtitle">
         Stake INFL, claim rewards, and withdraw from the Inflara staking vault.
       </p>
 
@@ -322,6 +173,6 @@
     </section>
   </main>
 
-<script src="./script.js?v=staking-live-14"></script>
+  <script src="./script.js?v=staking-rollback-1"></script>
 </body>
 </html>
