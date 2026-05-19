@@ -579,6 +579,11 @@ async function fillMaxStake() {
 
     $("stake-slider").value = 100;
 
+    setText(
+      "slider-percent",
+      "100%"
+    );
+
     setStatus(
       "Max stake amount filled."
     );
@@ -604,6 +609,11 @@ async function updateStakeFromSlider(
       Number(
         event.target.value
       );
+
+    setText(
+      "slider-percent",
+      `${percent}%`
+    );
 
     const { token } =
       await getReadContracts();
