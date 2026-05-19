@@ -40,7 +40,6 @@ let manuallyDisconnected = false;
 
 document.addEventListener("DOMContentLoaded", async () => {
   initStarfield();
-
   bindButtons();
 
   await reconnectIfAlreadyConnected();
@@ -57,10 +56,7 @@ function $(id) {
 
 function setText(id, value) {
   const el = $(id);
-
-  if (el) {
-    el.textContent = value;
-  }
+  if (el) el.textContent = value;
 }
 
 function setStatus(message) {
@@ -69,10 +65,31 @@ function setStatus(message) {
 
 function setInputValue(id, value) {
   const input = $(id);
+  if (input) input.value = value;
+}
 
-  if (input) {
-    input.value = value;
-  }
+function showToast(title, message, type = "info") {
+  const root = $("toast-root");
+  if (!root) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+
+  toast.innerHTML = `
+    <div class="toast-title">${title}</div>
+    <div class="toast-message">${message}</div>
+  `;
+
+  root.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(8px)";
+  }, 4200);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 4800);
 }
 
 function setButtonLoading(buttonId, loadingText) {
@@ -203,53 +220,14 @@ async function ensureSepolia() {
 function bindButtons() {
   bindWalletButton();
 
-  $("refresh-staking")
-    ?.addEventListener(
-      "click",
-      refreshStakingUi
-    );
-
-  $("approve-infl")
-    ?.addEventListener(
-      "click",
-      approveInfl
-    );
-
-  $("stake-infl")
-    ?.addEventListener(
-      "click",
-      stakeInfl
-    );
-
-  $("claim-rewards")
-    ?.addEventListener(
-      "click",
-      claimRewards
-    );
-
-  $("withdraw-infl")
-    ?.addEventListener(
-      "click",
-      withdrawInfl
-    );
-
-  $("exit-staking")
-    ?.addEventListener(
-      "click",
-      exitStaking
-    );
-
-  $("max-stake")
-    ?.addEventListener(
-      "click",
-      fillMaxStake
-    );
-
-  $("stake-slider")
-    ?.addEventListener(
-      "input",
-      updateStakeFromSlider
-    );
+  $("refresh-staking")?.addEventListener("click", refreshStakingUi);
+  $("approve-infl")?.addEventListener("click", approveInfl);
+  $("stake-infl")?.addEventListener("click", stakeInfl);
+  $("claim-rewards")?.addEventListener("click", claimRewards);
+  $("withdraw-infl")?.addEventListener("click", withdrawInfl);
+  $("exit-staking")?.addEventListener("click", exitStaking);
+  $("max-stake")?.addEventListener("click", fillMaxStake);
+  $("stake-slider")?.addEventListener("input", updateStakeFromSlider);
 
   if (window.ethereum) {
     window.ethereum.on?.(
@@ -293,9 +271,8 @@ async function connectWallet() {
   try {
     manuallyDisconnected = false;
 
-    setStatus(
-      "Connecting wallet..."
-    );
+    setStatus("Connecting wallet...");
+    showToast("Wallet", "Connecting wallet...", "info");
 
     await ensureSepolia();
 
@@ -315,32 +292,26 @@ async function connectWallet() {
     userAddress =
       await signer.getAddress();
 
-    setText(
-      "wallet-address",
-      userAddress
-    );
-
-    setText(
-      "wallet-network",
-      APP_CONFIG.chainName
-    );
+    setText("wallet-address", userAddress);
+    setText("wallet-network", APP_CONFIG.chainName);
 
     updateWalletButton();
 
-    setStatus(
-      "Wallet connected."
-    );
+    setStatus("Wallet connected.");
+    showToast("Wallet connected", shortAddress(userAddress), "success");
 
     await refreshStakingUi();
 
   } catch (error) {
     console.error(error);
 
-    setStatus(
+    const message =
       error.reason ||
       error.message ||
-      "Connection failed."
-    );
+      "Connection failed.";
+
+    setStatus(message);
+    showToast("Connection failed", message, "error");
   }
 }
 
@@ -351,36 +322,16 @@ function disconnectWallet() {
   signer = null;
   userAddress = null;
 
-  setText(
-    "wallet-address",
-    "Not connected"
-  );
-
-  setText(
-    "wallet-network",
-    "—"
-  );
-
-  setText(
-    "wallet-infl-balance",
-    "—"
-  );
-
-  setText(
-    "vault-user-staked",
-    "—"
-  );
-
-  setText(
-    "vault-earned",
-    "—"
-  );
+  setText("wallet-address", "Not connected");
+  setText("wallet-network", "—");
+  setText("wallet-infl-balance", "—");
+  setText("vault-user-staked", "—");
+  setText("vault-earned", "—");
 
   updateWalletButton();
 
-  setStatus(
-    "Wallet disconnected."
-  );
+  setStatus("Wallet disconnected.");
+  showToast("Wallet disconnected", "Frontend session cleared.", "info");
 }
 
 async function reconnectIfAlreadyConnected() {
@@ -416,32 +367,20 @@ async function reconnectIfAlreadyConnected() {
     userAddress =
       await signer.getAddress();
 
-    setText(
-      "wallet-address",
-      userAddress
-    );
-
-    setText(
-      "wallet-network",
-      APP_CONFIG.chainName
-    );
+    setText("wallet-address", userAddress);
+    setText("wallet-network", APP_CONFIG.chainName);
 
     updateWalletButton();
 
-    setStatus(
-      "Wallet connected."
-    );
+    setStatus("Wallet connected.");
 
   } catch (error) {
     console.error(error);
-
     updateWalletButton();
   }
 }
 
-async function handleAccountsChanged(
-  accounts
-) {
+async function handleAccountsChanged(accounts) {
   if (!accounts.length) {
     disconnectWallet();
     return;
@@ -461,21 +400,13 @@ async function handleAccountsChanged(
   signer =
     await provider.getSigner();
 
-  setText(
-    "wallet-address",
-    userAddress
-  );
-
-  setText(
-    "wallet-network",
-    APP_CONFIG.chainName
-  );
+  setText("wallet-address", userAddress);
+  setText("wallet-network", APP_CONFIG.chainName);
 
   updateWalletButton();
 
-  setStatus(
-    "Wallet changed."
-  );
+  setStatus("Wallet changed.");
+  showToast("Wallet changed", shortAddress(userAddress), "info");
 
   await refreshStakingUi();
 }
@@ -500,30 +431,11 @@ async function refreshStakingUi() {
     );
 
     if (!userAddress) {
-      setText(
-        "wallet-address",
-        "Not connected"
-      );
-
-      setText(
-        "wallet-network",
-        "—"
-      );
-
-      setText(
-        "wallet-infl-balance",
-        "—"
-      );
-
-      setText(
-        "vault-user-staked",
-        "—"
-      );
-
-      setText(
-        "vault-earned",
-        "—"
-      );
+      setText("wallet-address", "Not connected");
+      setText("wallet-network", "—");
+      setText("wallet-infl-balance", "—");
+      setText("vault-user-staked", "—");
+      setText("vault-earned", "—");
 
       updateWalletButton();
 
@@ -536,9 +448,7 @@ async function refreshStakingUi() {
       earned
     ] = await Promise.all([
       token.balanceOf(userAddress),
-
       vault.balanceOf(userAddress),
-
       vault.earned(userAddress)
     ]);
 
@@ -604,18 +514,20 @@ async function fillMaxStake() {
       "Max stake amount filled."
     );
 
+    showToast("Max selected", "100% of wallet balance filled.", "info");
+
   } catch (error) {
     console.error(error);
 
     setStatus(
       "Could not fetch max balance."
     );
+
+    showToast("Max failed", "Could not fetch wallet balance.", "error");
   }
 }
 
-async function updateStakeFromSlider(
-  event
-) {
+async function updateStakeFromSlider(event) {
   try {
     if (!userAddress) {
       return;
@@ -682,6 +594,8 @@ async function approveInfl() {
       "Waiting for wallet confirmation..."
     );
 
+    showToast("Confirm approval", "Approve the transaction in your wallet.", "info");
+
     const tx =
       await token.approve(
         APP_CONFIG.contracts.stakingVault,
@@ -692,22 +606,29 @@ async function approveInfl() {
       "Waiting for blockchain confirmation..."
     );
 
+    showToast("Approval submitted", "Waiting for blockchain confirmation.", "info");
+
     await tx.wait();
 
     setStatus(
       "Approval confirmed."
     );
 
+    showToast("Approval confirmed", "INFL approval was successful.", "success");
+
     await refreshStakingUi();
 
   } catch (error) {
     console.error(error);
 
-    setStatus(
+    const message =
       error.reason ||
+      error.shortMessage ||
       error.message ||
-      "Approval failed."
-    );
+      "Approval failed.";
+
+    setStatus(message);
+    showToast("Approval failed", message, "error");
 
   } finally {
     if (resetButton) {
@@ -736,6 +657,8 @@ async function stakeInfl() {
       "Waiting for wallet confirmation..."
     );
 
+    showToast("Confirm stake", "Approve the staking transaction in your wallet.", "info");
+
     const tx =
       await vault.stake(
         amount
@@ -745,22 +668,29 @@ async function stakeInfl() {
       "Waiting for blockchain confirmation..."
     );
 
+    showToast("Stake submitted", "Waiting for blockchain confirmation.", "info");
+
     await tx.wait();
 
     setStatus(
       "Stake confirmed."
     );
 
+    showToast("Stake confirmed", "INFL successfully staked.", "success");
+
     await refreshStakingUi();
 
   } catch (error) {
     console.error(error);
 
-    setStatus(
+    const message =
       error.reason ||
+      error.shortMessage ||
       error.message ||
-      "Stake failed."
-    );
+      "Stake failed.";
+
+    setStatus(message);
+    showToast("Stake failed", message, "error");
 
   } finally {
     if (resetButton) {
@@ -784,6 +714,8 @@ async function claimRewards() {
       "Waiting for wallet confirmation..."
     );
 
+    showToast("Confirm claim", "Approve the claim transaction in your wallet.", "info");
+
     const tx =
       await vault.claimRewards();
 
@@ -791,22 +723,29 @@ async function claimRewards() {
       "Waiting for blockchain confirmation..."
     );
 
+    showToast("Claim submitted", "Waiting for blockchain confirmation.", "info");
+
     await tx.wait();
 
     setStatus(
       "Rewards claimed."
     );
 
+    showToast("Rewards claimed", "Your staking rewards were claimed.", "success");
+
     await refreshStakingUi();
 
   } catch (error) {
     console.error(error);
 
-    setStatus(
+    const message =
       error.reason ||
+      error.shortMessage ||
       error.message ||
-      "Claim failed."
-    );
+      "Claim failed.";
+
+    setStatus(message);
+    showToast("Claim failed", message, "error");
 
   } finally {
     if (resetButton) {
@@ -835,6 +774,8 @@ async function withdrawInfl() {
       "Waiting for wallet confirmation..."
     );
 
+    showToast("Confirm withdrawal", "Approve the withdrawal in your wallet.", "info");
+
     const tx =
       await vault.withdraw(
         amount
@@ -844,22 +785,29 @@ async function withdrawInfl() {
       "Waiting for blockchain confirmation..."
     );
 
+    showToast("Withdrawal submitted", "Waiting for blockchain confirmation.", "info");
+
     await tx.wait();
 
     setStatus(
       "Withdraw confirmed."
     );
 
+    showToast("Withdraw confirmed", "INFL withdrawn successfully.", "success");
+
     await refreshStakingUi();
 
   } catch (error) {
     console.error(error);
 
-    setStatus(
+    const message =
       error.reason ||
+      error.shortMessage ||
       error.message ||
-      "Withdraw failed."
-    );
+      "Withdraw failed.";
+
+    setStatus(message);
+    showToast("Withdraw failed", message, "error");
 
   } finally {
     if (resetButton) {
@@ -883,6 +831,8 @@ async function exitStaking() {
       "Waiting for wallet confirmation..."
     );
 
+    showToast("Confirm exit", "Approve exit all in your wallet.", "info");
+
     const tx =
       await vault.exit();
 
@@ -890,22 +840,29 @@ async function exitStaking() {
       "Waiting for blockchain confirmation..."
     );
 
+    showToast("Exit submitted", "Waiting for blockchain confirmation.", "info");
+
     await tx.wait();
 
     setStatus(
       "Exit confirmed."
     );
 
+    showToast("Exit confirmed", "You exited staking successfully.", "success");
+
     await refreshStakingUi();
 
   } catch (error) {
     console.error(error);
 
-    setStatus(
+    const message =
       error.reason ||
+      error.shortMessage ||
       error.message ||
-      "Exit failed."
-    );
+      "Exit failed.";
+
+    setStatus(message);
+    showToast("Exit failed", message, "error");
 
   } finally {
     if (resetButton) {
