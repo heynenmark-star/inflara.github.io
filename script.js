@@ -68,6 +68,10 @@ function setInputValue(id, value) {
   if (input) input.value = value;
 }
 
+function getTxLink(hash) {
+  return `https://sepolia.etherscan.io/tx/${hash}`;
+}
+
 function showToast(title, message, type = "info") {
   const root = $("toast-root");
   if (!root) return;
@@ -94,7 +98,6 @@ function showToast(title, message, type = "info") {
 
 function setButtonLoading(buttonId, loadingText) {
   const button = $(buttonId);
-
   if (!button) return null;
 
   const originalText = button.textContent;
@@ -114,7 +117,6 @@ function shortAddress(address) {
 
 function updateWalletButton() {
   const btn = $("connect-wallet");
-
   if (!btn) return;
 
   btn.textContent = userAddress
@@ -123,9 +125,7 @@ function updateWalletButton() {
 }
 
 function formatInfl(raw) {
-  const value = Number(
-    ethers.formatUnits(raw, 18)
-  );
+  const value = Number(ethers.formatUnits(raw, 18));
 
   return `${value.toLocaleString(undefined, {
     maximumFractionDigits: 6
@@ -136,9 +136,7 @@ function parseAmount(inputId) {
   const value = $(inputId)?.value;
 
   if (!value || Number(value) <= 0) {
-    throw new Error(
-      "Enter an amount greater than 0"
-    );
+    throw new Error("Enter an amount greater than 0");
   }
 
   return ethers.parseUnits(value, 18);
@@ -147,9 +145,7 @@ function parseAmount(inputId) {
 /* ---------------- CONTRACTS ---------------- */
 
 function getReadProvider() {
-  return new ethers.JsonRpcProvider(
-    APP_CONFIG.rpc
-  );
+  return new ethers.JsonRpcProvider(APP_CONFIG.rpc);
 }
 
 async function getReadContracts() {
@@ -197,10 +193,9 @@ async function ensureSepolia() {
     throw new Error("No wallet found");
   }
 
-  const chainId =
-    await window.ethereum.request({
-      method: "eth_chainId"
-    });
+  const chainId = await window.ethereum.request({
+    method: "eth_chainId"
+  });
 
   if (chainId === APP_CONFIG.chainIdHex) {
     return;
@@ -208,7 +203,6 @@ async function ensureSepolia() {
 
   await window.ethereum.request({
     method: "wallet_switchEthereumChain",
-
     params: [
       {
         chainId: APP_CONFIG.chainIdHex
@@ -244,11 +238,9 @@ function bindButtons() {
 
 function bindWalletButton() {
   const oldBtn = $("connect-wallet");
-
   if (!oldBtn) return;
 
-  const newBtn =
-    oldBtn.cloneNode(true);
+  const newBtn = oldBtn.cloneNode(true);
 
   oldBtn.parentNode.replaceChild(
     newBtn,
@@ -276,21 +268,15 @@ async function connectWallet() {
 
     await ensureSepolia();
 
-    provider =
-      new ethers.BrowserProvider(
-        window.ethereum
-      );
+    provider = new ethers.BrowserProvider(window.ethereum);
 
     await provider.send(
       "eth_requestAccounts",
       []
     );
 
-    signer =
-      await provider.getSigner();
-
-    userAddress =
-      await signer.getAddress();
+    signer = await provider.getSigner();
+    userAddress = await signer.getAddress();
 
     setText("wallet-address", userAddress);
     setText("wallet-network", APP_CONFIG.chainName);
@@ -301,7 +287,6 @@ async function connectWallet() {
     showToast("Wallet connected", shortAddress(userAddress), "success");
 
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
 
@@ -356,16 +341,9 @@ async function reconnectIfAlreadyConnected() {
 
     await ensureSepolia();
 
-    provider =
-      new ethers.BrowserProvider(
-        window.ethereum
-      );
-
-    signer =
-      await provider.getSigner();
-
-    userAddress =
-      await signer.getAddress();
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+    userAddress = await signer.getAddress();
 
     setText("wallet-address", userAddress);
     setText("wallet-network", APP_CONFIG.chainName);
@@ -373,7 +351,6 @@ async function reconnectIfAlreadyConnected() {
     updateWalletButton();
 
     setStatus("Wallet connected.");
-
   } catch (error) {
     console.error(error);
     updateWalletButton();
@@ -392,13 +369,8 @@ async function handleAccountsChanged(accounts) {
 
   userAddress = accounts[0];
 
-  provider =
-    new ethers.BrowserProvider(
-      window.ethereum
-    );
-
-  signer =
-    await provider.getSigner();
+  provider = new ethers.BrowserProvider(window.ethereum);
+  signer = await provider.getSigner();
 
   setText("wallet-address", userAddress);
   setText("wallet-network", APP_CONFIG.chainName);
@@ -466,7 +438,6 @@ async function refreshStakingUi() {
       "vault-earned",
       formatInfl(earned)
     );
-
   } catch (error) {
     console.error(error);
 
@@ -515,7 +486,6 @@ async function fillMaxStake() {
     );
 
     showToast("Max selected", "100% of wallet balance filled.", "info");
-
   } catch (error) {
     console.error(error);
 
@@ -566,7 +536,6 @@ async function updateStakeFromSlider(event) {
       "stake-amount",
       amount.toFixed(6)
     );
-
   } catch (error) {
     console.error(error);
   }
@@ -614,10 +583,15 @@ async function approveInfl() {
       "Approval confirmed."
     );
 
-    showToast("Approval confirmed", "INFL approval was successful.", "success");
+    showToast(
+      "Approval confirmed",
+      `INFL approval was successful. ${getTxLink(tx.hash)}`,
+      "success"
+    );
+
+    window.open(getTxLink(tx.hash), "_blank");
 
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
 
@@ -629,7 +603,6 @@ async function approveInfl() {
 
     setStatus(message);
     showToast("Approval failed", message, "error");
-
   } finally {
     if (resetButton) {
       resetButton();
@@ -676,10 +649,15 @@ async function stakeInfl() {
       "Stake confirmed."
     );
 
-    showToast("Stake confirmed", "INFL successfully staked.", "success");
+    showToast(
+      "Stake confirmed",
+      `INFL successfully staked. ${getTxLink(tx.hash)}`,
+      "success"
+    );
+
+    window.open(getTxLink(tx.hash), "_blank");
 
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
 
@@ -691,7 +669,6 @@ async function stakeInfl() {
 
     setStatus(message);
     showToast("Stake failed", message, "error");
-
   } finally {
     if (resetButton) {
       resetButton();
@@ -731,10 +708,15 @@ async function claimRewards() {
       "Rewards claimed."
     );
 
-    showToast("Rewards claimed", "Your staking rewards were claimed.", "success");
+    showToast(
+      "Rewards claimed",
+      `Your staking rewards were claimed. ${getTxLink(tx.hash)}`,
+      "success"
+    );
+
+    window.open(getTxLink(tx.hash), "_blank");
 
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
 
@@ -746,7 +728,6 @@ async function claimRewards() {
 
     setStatus(message);
     showToast("Claim failed", message, "error");
-
   } finally {
     if (resetButton) {
       resetButton();
@@ -793,10 +774,15 @@ async function withdrawInfl() {
       "Withdraw confirmed."
     );
 
-    showToast("Withdraw confirmed", "INFL withdrawn successfully.", "success");
+    showToast(
+      "Withdraw confirmed",
+      `INFL withdrawn successfully. ${getTxLink(tx.hash)}`,
+      "success"
+    );
+
+    window.open(getTxLink(tx.hash), "_blank");
 
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
 
@@ -808,7 +794,6 @@ async function withdrawInfl() {
 
     setStatus(message);
     showToast("Withdraw failed", message, "error");
-
   } finally {
     if (resetButton) {
       resetButton();
@@ -848,10 +833,15 @@ async function exitStaking() {
       "Exit confirmed."
     );
 
-    showToast("Exit confirmed", "You exited staking successfully.", "success");
+    showToast(
+      "Exit confirmed",
+      `You exited staking successfully. ${getTxLink(tx.hash)}`,
+      "success"
+    );
+
+    window.open(getTxLink(tx.hash), "_blank");
 
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
 
@@ -863,7 +853,6 @@ async function exitStaking() {
 
     setStatus(message);
     showToast("Exit failed", message, "error");
-
   } finally {
     if (resetButton) {
       resetButton();
