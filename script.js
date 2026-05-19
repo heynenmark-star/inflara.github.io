@@ -75,6 +75,22 @@ function setInputValue(id, value) {
   }
 }
 
+function setButtonLoading(buttonId, loadingText) {
+  const button = $(buttonId);
+
+  if (!button) return null;
+
+  const originalText = button.textContent;
+
+  button.disabled = true;
+  button.textContent = loadingText;
+
+  return () => {
+    button.disabled = false;
+    button.textContent = originalText;
+  };
+}
+
 function shortAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
@@ -647,6 +663,12 @@ async function updateStakeFromSlider(
 /* ---------------- TRANSACTIONS ---------------- */
 
 async function approveInfl() {
+  const resetButton =
+    setButtonLoading(
+      "approve-infl",
+      "Approving..."
+    );
+
   try {
     const amount =
       parseAmount(
@@ -657,7 +679,7 @@ async function approveInfl() {
       await getWriteContracts();
 
     setStatus(
-      "Approving INFL..."
+      "Waiting for wallet confirmation..."
     );
 
     const tx =
@@ -665,6 +687,10 @@ async function approveInfl() {
         APP_CONFIG.contracts.stakingVault,
         amount
       );
+
+    setStatus(
+      "Waiting for blockchain confirmation..."
+    );
 
     await tx.wait();
 
@@ -682,10 +708,21 @@ async function approveInfl() {
       error.message ||
       "Approval failed."
     );
+
+  } finally {
+    if (resetButton) {
+      resetButton();
+    }
   }
 }
 
 async function stakeInfl() {
+  const resetButton =
+    setButtonLoading(
+      "stake-infl",
+      "Staking..."
+    );
+
   try {
     const amount =
       parseAmount(
@@ -696,13 +733,17 @@ async function stakeInfl() {
       await getWriteContracts();
 
     setStatus(
-      "Staking INFL..."
+      "Waiting for wallet confirmation..."
     );
 
     const tx =
       await vault.stake(
         amount
       );
+
+    setStatus(
+      "Waiting for blockchain confirmation..."
+    );
 
     await tx.wait();
 
@@ -720,20 +761,35 @@ async function stakeInfl() {
       error.message ||
       "Stake failed."
     );
+
+  } finally {
+    if (resetButton) {
+      resetButton();
+    }
   }
 }
 
 async function claimRewards() {
+  const resetButton =
+    setButtonLoading(
+      "claim-rewards",
+      "Claiming..."
+    );
+
   try {
     const { vault } =
       await getWriteContracts();
 
     setStatus(
-      "Claiming rewards..."
+      "Waiting for wallet confirmation..."
     );
 
     const tx =
       await vault.claimRewards();
+
+    setStatus(
+      "Waiting for blockchain confirmation..."
+    );
 
     await tx.wait();
 
@@ -751,10 +807,21 @@ async function claimRewards() {
       error.message ||
       "Claim failed."
     );
+
+  } finally {
+    if (resetButton) {
+      resetButton();
+    }
   }
 }
 
 async function withdrawInfl() {
+  const resetButton =
+    setButtonLoading(
+      "withdraw-infl",
+      "Withdrawing..."
+    );
+
   try {
     const amount =
       parseAmount(
@@ -765,13 +832,17 @@ async function withdrawInfl() {
       await getWriteContracts();
 
     setStatus(
-      "Withdrawing INFL..."
+      "Waiting for wallet confirmation..."
     );
 
     const tx =
       await vault.withdraw(
         amount
       );
+
+    setStatus(
+      "Waiting for blockchain confirmation..."
+    );
 
     await tx.wait();
 
@@ -789,20 +860,35 @@ async function withdrawInfl() {
       error.message ||
       "Withdraw failed."
     );
+
+  } finally {
+    if (resetButton) {
+      resetButton();
+    }
   }
 }
 
 async function exitStaking() {
+  const resetButton =
+    setButtonLoading(
+      "exit-staking",
+      "Exiting..."
+    );
+
   try {
     const { vault } =
       await getWriteContracts();
 
     setStatus(
-      "Exiting staking..."
+      "Waiting for wallet confirmation..."
     );
 
     const tx =
       await vault.exit();
+
+    setStatus(
+      "Waiting for blockchain confirmation..."
+    );
 
     await tx.wait();
 
@@ -820,6 +906,11 @@ async function exitStaking() {
       error.message ||
       "Exit failed."
     );
+
+  } finally {
+    if (resetButton) {
+      resetButton();
+    }
   }
 }
 
