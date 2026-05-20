@@ -647,3 +647,52 @@ footer {
     border-radius: 18px;
   }
 }
+.approval-box {
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(7, 16, 38, 0.82),
+      rgba(5, 11, 26, 0.92)
+    );
+
+  border: 1px solid var(--border-gold);
+
+  box-shadow: var(--shadow-gold);
+}
+
+.approval-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  color: var(--accent-soft);
+
+  margin-bottom: 1rem;
+}
+
+.approval-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+
+  padding: 0.85rem 0;
+
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.approval-row:last-child {
+  border-bottom: none;
+}
+
+.approval-row span {
+  color: var(--muted);
+}
+
+.approval-row strong {
+  color: #f7f2dc;
+}
