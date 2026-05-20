@@ -143,6 +143,11 @@ function parseAmount(inputId) {
   return ethers.parseUnits(value, 18);
 }
 
+function clearApprovalBox() {
+  setText("approved-amount", "0 INFL");
+  setText("approval-status-text", "Approval required");
+}
+
 /* ---------------- CONTRACTS ---------------- */
 
 function getReadProvider() {
@@ -226,6 +231,7 @@ function bindButtons() {
   $("stake-amount")?.addEventListener("input", updateStakeButtonFromAllowance);
 
   updateStakeButtonDisabled(true);
+  clearApprovalBox();
 
   if (window.ethereum) {
     window.ethereum.on?.(
@@ -318,6 +324,7 @@ function disconnectWallet() {
   setText("vault-earned", "—");
 
   updateStakeButtonDisabled(true);
+  clearApprovalBox();
   updateWalletButton();
 
   setStatus("Wallet disconnected.");
@@ -332,6 +339,7 @@ async function reconnectIfAlreadyConnected() {
     ) {
       updateWalletButton();
       updateStakeButtonDisabled(true);
+      clearApprovalBox();
       return;
     }
 
@@ -343,6 +351,7 @@ async function reconnectIfAlreadyConnected() {
     if (!accounts.length) {
       updateWalletButton();
       updateStakeButtonDisabled(true);
+      clearApprovalBox();
       return;
     }
 
@@ -362,6 +371,7 @@ async function reconnectIfAlreadyConnected() {
     console.error(error);
     updateWalletButton();
     updateStakeButtonDisabled(true);
+    clearApprovalBox();
   }
 }
 
@@ -404,17 +414,11 @@ async function updateStakeButtonFromAllowance() {
   try {
     if (!userAddress) {
       updateStakeButtonDisabled(true);
+      clearApprovalBox();
       return;
     }
 
     const value = $("stake-amount")?.value;
-
-    if (!value || Number(value) <= 0) {
-      updateStakeButtonDisabled(true);
-      return;
-    }
-
-    const amount = ethers.parseUnits(value, 18);
 
     const { token } =
       await getReadContracts();
@@ -425,10 +429,37 @@ async function updateStakeButtonFromAllowance() {
         APP_CONFIG.contracts.stakingVault
       );
 
+    setText(
+      "approved-amount",
+      formatInfl(allowance)
+    );
+
+    if (!value || Number(value) <= 0) {
+      updateStakeButtonDisabled(true);
+
+      setText(
+        "approval-status-text",
+        allowance > 0n
+          ? "Enter amount to stake"
+          : "Approval required"
+      );
+
+      return;
+    }
+
+    const amount = ethers.parseUnits(value, 18);
+
     const hasEnoughAllowance =
       allowance >= amount;
 
     updateStakeButtonDisabled(!hasEnoughAllowance);
+
+    setText(
+      "approval-status-text",
+      hasEnoughAllowance
+        ? "Ready to stake"
+        : "Approval required"
+    );
 
     if (hasEnoughAllowance) {
       setStatus("Approved amount available. Ready to stake.");
@@ -439,6 +470,7 @@ async function updateStakeButtonFromAllowance() {
   } catch (error) {
     console.error(error);
     updateStakeButtonDisabled(true);
+    setText("approval-status-text", "Approval check failed");
   }
 }
 
@@ -468,6 +500,7 @@ async function refreshStakingUi() {
 
       updateWalletButton();
       updateStakeButtonDisabled(true);
+      clearApprovalBox();
 
       return;
     }
@@ -563,6 +596,7 @@ async function updateStakeFromSlider(event) {
   try {
     if (!userAddress) {
       updateStakeButtonDisabled(true);
+      clearApprovalBox();
       return;
     }
 
