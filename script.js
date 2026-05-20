@@ -17,7 +17,8 @@ const APP_CONFIG = {
 const ABI = {
   token: [
     "function balanceOf(address owner) view returns (uint256)",
-    "function approve(address spender, uint256 amount) returns (bool)"
+    "function approve(address spender, uint256 amount) returns (bool)",
+    "function allowance(address owner, address spender) view returns (uint256)"
   ],
 
   vault: [
@@ -222,6 +223,9 @@ function bindButtons() {
   $("exit-staking")?.addEventListener("click", exitStaking);
   $("max-stake")?.addEventListener("click", fillMaxStake);
   $("stake-slider")?.addEventListener("input", updateStakeFromSlider);
+  $("stake-amount")?.addEventListener("input", updateStakeButtonFromAllowance);
+
+  updateStakeButtonDisabled(true);
 
   if (window.ethereum) {
     window.ethereum.on?.(
@@ -313,6 +317,7 @@ function disconnectWallet() {
   setText("vault-user-staked", "—");
   setText("vault-earned", "—");
 
+  updateStakeButtonDisabled(true);
   updateWalletButton();
 
   setStatus("Wallet disconnected.");
@@ -326,6 +331,7 @@ async function reconnectIfAlreadyConnected() {
       !window.ethereum
     ) {
       updateWalletButton();
+      updateStakeButtonDisabled(true);
       return;
     }
 
@@ -336,6 +342,7 @@ async function reconnectIfAlreadyConnected() {
 
     if (!accounts.length) {
       updateWalletButton();
+      updateStakeButtonDisabled(true);
       return;
     }
 
@@ -354,6 +361,7 @@ async function reconnectIfAlreadyConnected() {
   } catch (error) {
     console.error(error);
     updateWalletButton();
+    updateStakeButtonDisabled(true);
   }
 }
 
@@ -385,6 +393,55 @@ async function handleAccountsChanged(accounts) {
 
 /* ---------------- UI ---------------- */
 
+function updateStakeButtonDisabled(disabled) {
+  const stakeButton = $("stake-infl");
+  if (stakeButton) {
+    stakeButton.disabled = disabled;
+  }
+}
+
+async function updateStakeButtonFromAllowance() {
+  try {
+    if (!userAddress) {
+      updateStakeButtonDisabled(true);
+      return;
+    }
+
+    const value = $("stake-amount")?.value;
+
+    if (!value || Number(value) <= 0) {
+      updateStakeButtonDisabled(true);
+      return;
+    }
+
+    const amount = ethers.parseUnits(value, 18);
+
+    const { token } =
+      await getReadContracts();
+
+    const allowance =
+      await token.allowance(
+        userAddress,
+        APP_CONFIG.contracts.stakingVault
+      );
+
+    const hasEnoughAllowance =
+      allowance >= amount;
+
+    updateStakeButtonDisabled(!hasEnoughAllowance);
+
+    if (hasEnoughAllowance) {
+      setStatus("Approved amount available. Ready to stake.");
+    } else {
+      setStatus("Approve INFL before staking.");
+    }
+
+  } catch (error) {
+    console.error(error);
+    updateStakeButtonDisabled(true);
+  }
+}
+
 async function refreshStakingUi() {
   try {
     if (!$("vault-total-staked")) {
@@ -410,6 +467,7 @@ async function refreshStakingUi() {
       setText("vault-earned", "—");
 
       updateWalletButton();
+      updateStakeButtonDisabled(true);
 
       return;
     }
@@ -438,6 +496,8 @@ async function refreshStakingUi() {
       "vault-earned",
       formatInfl(earned)
     );
+
+    await updateStakeButtonFromAllowance();
   } catch (error) {
     console.error(error);
 
@@ -486,6 +546,8 @@ async function fillMaxStake() {
     );
 
     showToast("Max selected", "100% of wallet balance filled.", "info");
+
+    await updateStakeButtonFromAllowance();
   } catch (error) {
     console.error(error);
 
@@ -500,6 +562,7 @@ async function fillMaxStake() {
 async function updateStakeFromSlider(event) {
   try {
     if (!userAddress) {
+      updateStakeButtonDisabled(true);
       return;
     }
 
@@ -536,6 +599,8 @@ async function updateStakeFromSlider(event) {
       "stake-amount",
       amount.toFixed(6)
     );
+
+    await updateStakeButtonFromAllowance();
   } catch (error) {
     console.error(error);
   }
@@ -607,6 +672,8 @@ async function approveInfl() {
     if (resetButton) {
       resetButton();
     }
+
+    await updateStakeButtonFromAllowance();
   }
 }
 
@@ -618,6 +685,13 @@ async function stakeInfl() {
     );
 
   try {
+    await updateStakeButtonFromAllowance();
+
+    const stakeButton = $("stake-infl");
+    if (stakeButton?.disabled) {
+      throw new Error("Approve INFL before staking.");
+    }
+
     const amount =
       parseAmount(
         "stake-amount"
@@ -673,6 +747,8 @@ async function stakeInfl() {
     if (resetButton) {
       resetButton();
     }
+
+    await updateStakeButtonFromAllowance();
   }
 }
 
