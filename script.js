@@ -65,6 +65,15 @@ function setInputValue(id, value) {
   if (input) input.value = value;
 }
 
+function updateLastUpdated() {
+  const now = new Date();
+
+  setText(
+    "last-updated",
+    now.toLocaleTimeString()
+  );
+}
+
 function getTxLink(hash) {
   return `https://sepolia.etherscan.io/tx/${hash}`;
 }
@@ -359,6 +368,7 @@ function disconnectWallet() {
   setText("wallet-infl-balance", "—");
   setText("vault-user-staked", "—");
   setText("vault-earned", "—");
+  setText("last-updated", "—");
 
   updateStakeButtonDisabled(true);
   clearApprovalBox();
@@ -578,6 +588,7 @@ async function refreshStakingUi() {
 
     updateClaimButtonGlow(earned);
     updateRewardMetrics(userStaked, earned);
+    updateLastUpdated();
 
     await updateStakeButtonFromAllowance();
   } catch (error) {
