@@ -26,7 +26,6 @@ body {
   color: var(--fg);
   line-height: 1.6;
   overflow-x: hidden;
-
   background:
     radial-gradient(circle at 12% 20%, rgba(255,255,255,0.95) 1.4px, transparent 2.6px),
     radial-gradient(circle at 28% 35%, rgba(255,255,255,0.55) 1px, transparent 2px),
@@ -37,7 +36,6 @@ body {
     radial-gradient(circle at 18% 70%, rgba(255,255,255,0.6) 1.2px, transparent 2.4px),
     radial-gradient(circle at 72% 78%, rgba(255,255,255,0.85) 1.7px, transparent 3px),
     linear-gradient(to bottom, var(--bg-deep), var(--bg));
-
   background-size:
     260px 260px,
     360px 360px,
@@ -48,7 +46,6 @@ body {
     460px 460px,
     620px 620px,
     100% 100%;
-
   animation:
     starRise 55s linear infinite,
     starTwinkle 4.8s ease-in-out infinite alternate;
@@ -262,6 +259,18 @@ p {
   background: transparent;
 }
 
+.button:disabled,
+.mini-button:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  color: #f7f2dc;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.08);
+  background: rgba(212, 175, 55, 0.045);
+  border-color: rgba(212, 175, 55, 0.16);
+  filter: saturate(0.72);
+  box-shadow: none;
+}
+
 .hero-buttons {
   display: flex;
   justify-content: center;
@@ -286,18 +295,15 @@ p {
       rgba(7, 16, 38, 0.88),
       rgba(5, 11, 26, 0.94)
     );
-
   border-radius: 22px;
   padding: 1.75rem 1rem;
   min-height: 132px;
   text-align: center;
   border: 1px solid var(--border-gold);
   box-shadow: var(--shadow-gold);
-
   display: flex;
   flex-direction: column;
   justify-content: center;
-
   transition:
     transform 0.2s ease,
     border-color 0.2s ease;
@@ -411,24 +417,18 @@ section img {
   height: auto;
   object-fit: contain;
   border-radius: 28px;
-
   opacity: 0.92;
   mix-blend-mode: screen;
-
   filter:
     drop-shadow(0 0 22px rgba(212, 175, 55, 0.10))
     brightness(1.03);
-
   -webkit-mask-image:
     linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%),
     linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
-
   -webkit-mask-composite: source-in;
-
   mask-image:
     linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%),
     linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
-
   mask-composite: intersect;
 }
 
@@ -456,7 +456,6 @@ section img {
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-
   background:
     radial-gradient(
       circle at center,
@@ -480,9 +479,7 @@ section img {
   position: relative;
   padding: 20px;
   border-radius: 22px;
-
   background: rgba(10, 15, 30, 0.58);
-
   border: 1px solid var(--border-gold);
   box-shadow: var(--shadow-gold);
   overflow: hidden;
@@ -501,6 +498,64 @@ footer {
   color: var(--muted);
   max-width: 900px;
   margin: 0 auto;
+}
+
+/* Toast notifications */
+
+.toast-root {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 5000;
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  min-width: 260px;
+  max-width: 360px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(8, 13, 28, 0.96);
+  border: 1px solid var(--border-gold);
+  color: var(--fg);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+  animation: toastIn 0.25s ease both;
+}
+
+.toast.success {
+  border-color: rgba(80, 220, 140, 0.55);
+}
+
+.toast.error {
+  border-color: rgba(255, 90, 90, 0.6);
+}
+
+.toast.info {
+  border-color: var(--border-gold);
+}
+
+.toast-title {
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.toast-message {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Responsive */
@@ -568,6 +623,16 @@ footer {
     height: 320px;
     padding: 12px;
   }
+
+  .toast-root {
+    left: 14px;
+    right: 14px;
+  }
+
+  .toast {
+    max-width: none;
+    width: 100%;
+  }
 }
 
 @media (max-width: 560px) {
@@ -580,74 +645,5 @@ footer {
   .diagram-image,
   .image-card img {
     border-radius: 18px;
-  }
-}
-/* Toast notifications */
-
-.toast-root {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  z-index: 5000;
-  display: grid;
-  gap: 10px;
-  pointer-events: none;
-}
-
-.toast {
-  min-width: 260px;
-  max-width: 360px;
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: rgba(8, 13, 28, 0.96);
-  border: 1px solid var(--border-gold);
-  color: var(--fg);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
-  animation: toastIn 0.25s ease both;
-}
-
-.toast.success {
-  border-color: rgba(80, 220, 140, 0.55);
-}
-
-.toast.error {
-  border-color: rgba(255, 90, 90, 0.6);
-}
-
-.toast.info {
-  border-color: var(--border-gold);
-}
-
-.toast-title {
-  font-weight: 700;
-  margin-bottom: 3px;
-}
-
-.toast-message {
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-@keyframes toastIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 640px) {
-  .toast-root {
-    left: 14px;
-    right: 14px;
-  }
-
-  .toast {
-    max-width: none;
-    width: 100%;
   }
 }
