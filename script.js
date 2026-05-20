@@ -148,6 +148,18 @@ function clearApprovalBox() {
   setText("approval-status-text", "Approval required");
 }
 
+function updateClaimButtonGlow(earned) {
+  const claimButton = $("claim-rewards");
+
+  if (!claimButton) return;
+
+  if (earned > 0n) {
+    claimButton.classList.add("claim-ready");
+  } else {
+    claimButton.classList.remove("claim-ready");
+  }
+}
+
 /* ---------------- CONTRACTS ---------------- */
 
 function getReadProvider() {
@@ -232,17 +244,11 @@ function bindButtons() {
 
   updateStakeButtonDisabled(true);
   clearApprovalBox();
+  updateClaimButtonGlow(0n);
 
   if (window.ethereum) {
-    window.ethereum.on?.(
-      "accountsChanged",
-      handleAccountsChanged
-    );
-
-    window.ethereum.on?.(
-      "chainChanged",
-      () => window.location.reload()
-    );
+    window.ethereum.on?.("accountsChanged", handleAccountsChanged);
+    window.ethereum.on?.("chainChanged", () => window.location.reload());
   }
 }
 
@@ -325,6 +331,7 @@ function disconnectWallet() {
 
   updateStakeButtonDisabled(true);
   clearApprovalBox();
+  updateClaimButtonGlow(0n);
   updateWalletButton();
 
   setStatus("Wallet disconnected.");
@@ -340,6 +347,7 @@ async function reconnectIfAlreadyConnected() {
       updateWalletButton();
       updateStakeButtonDisabled(true);
       clearApprovalBox();
+      updateClaimButtonGlow(0n);
       return;
     }
 
@@ -352,6 +360,7 @@ async function reconnectIfAlreadyConnected() {
       updateWalletButton();
       updateStakeButtonDisabled(true);
       clearApprovalBox();
+      updateClaimButtonGlow(0n);
       return;
     }
 
@@ -372,6 +381,7 @@ async function reconnectIfAlreadyConnected() {
     updateWalletButton();
     updateStakeButtonDisabled(true);
     clearApprovalBox();
+    updateClaimButtonGlow(0n);
   }
 }
 
@@ -405,6 +415,7 @@ async function handleAccountsChanged(accounts) {
 
 function updateStakeButtonDisabled(disabled) {
   const stakeButton = $("stake-infl");
+
   if (stakeButton) {
     stakeButton.disabled = disabled;
   }
@@ -501,6 +512,7 @@ async function refreshStakingUi() {
       updateWalletButton();
       updateStakeButtonDisabled(true);
       clearApprovalBox();
+      updateClaimButtonGlow(0n);
 
       return;
     }
@@ -529,6 +541,8 @@ async function refreshStakingUi() {
       "vault-earned",
       formatInfl(earned)
     );
+
+    updateClaimButtonGlow(earned);
 
     await updateStakeButtonFromAllowance();
   } catch (error) {
@@ -1070,42 +1084,4 @@ function initStarfield() {
   );
 
   draw();
-}
-/* Claim rewards active glow */
-
-.button.claim-ready {
-  border-color: rgba(212, 175, 55, 0.9);
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(212, 175, 55, 0.18),
-      rgba(212, 175, 55, 0.08)
-    );
-
-  box-shadow:
-    0 0 18px rgba(212, 175, 55, 0.30),
-    0 0 42px rgba(212, 175, 55, 0.16);
-
-  animation: rewardPulse 2s ease-in-out infinite;
-}
-
-@keyframes rewardPulse {
-  0% {
-    box-shadow:
-      0 0 12px rgba(212, 175, 55, 0.18),
-      0 0 26px rgba(212, 175, 55, 0.08);
-  }
-
-  50% {
-    box-shadow:
-      0 0 22px rgba(212, 175, 55, 0.40),
-      0 0 52px rgba(212, 175, 55, 0.22);
-  }
-
-  100% {
-    box-shadow:
-      0 0 12px rgba(212, 175, 55, 0.18),
-      0 0 26px rgba(212, 175, 55, 0.08);
-  }
 }
