@@ -37,8 +37,6 @@ let signer = null;
 let userAddress = null;
 let manuallyDisconnected = false;
 
-/* ---------------- INIT ---------------- */
-
 document.addEventListener("DOMContentLoaded", async () => {
   initStarfield();
   bindButtons();
@@ -48,8 +46,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   setInterval(refreshStakingUi, 10000);
 });
-
-/* ---------------- HELPERS ---------------- */
 
 function $(id) {
   return document.getElementById(id);
@@ -160,8 +156,6 @@ function updateClaimButtonGlow(earned) {
   }
 }
 
-/* ---------------- CONTRACTS ---------------- */
-
 function getReadProvider() {
   return new ethers.JsonRpcProvider(APP_CONFIG.rpc);
 }
@@ -203,8 +197,6 @@ async function getWriteContracts() {
     )
   };
 }
-
-/* ---------------- WALLET ---------------- */
 
 async function ensureSepolia() {
   if (!window.ethereum) {
@@ -410,8 +402,6 @@ async function handleAccountsChanged(accounts) {
 
   await refreshStakingUi();
 }
-
-/* ---------------- UI ---------------- */
 
 function updateStakeButtonDisabled(disabled) {
   const stakeButton = $("stake-infl");
@@ -653,8 +643,6 @@ async function updateStakeFromSlider(event) {
     console.error(error);
   }
 }
-
-/* ---------------- TRANSACTIONS ---------------- */
 
 async function approveInfl() {
   const resetButton =
@@ -926,6 +914,16 @@ async function withdrawInfl() {
 }
 
 async function exitStaking() {
+  const confirmed = window.confirm(
+    "Are you sure you want to exit all staking?\n\nThis will withdraw your full staked balance and claim available rewards."
+  );
+
+  if (!confirmed) {
+    setStatus("Exit cancelled.");
+    showToast("Exit cancelled", "No transaction was sent.", "info");
+    return;
+  }
+
   const resetButton =
     setButtonLoading(
       "exit-staking",
@@ -983,8 +981,6 @@ async function exitStaking() {
     }
   }
 }
-
-/* ---------------- STARFIELD ---------------- */
 
 function initStarfield() {
   const canvas =
