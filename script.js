@@ -3,9 +3,18 @@ const APP_CONFIG = {
   chainName: "Sepolia",
 
   rpcs: [
-    "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_",
-    "https://ethereum-sepolia-rpc.publicnode.com",
-    "https://rpc.sepolia.org"
+    {
+      name: "Primary Alchemy",
+      url: "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_"
+    },
+    {
+      name: "Backup PublicNode",
+      url: "https://ethereum-sepolia-rpc.publicnode.com"
+    },
+    {
+      name: "Backup Sepolia RPC",
+      url: "https://rpc.sepolia.org"
+    }
   ],
 
   contracts: {
@@ -13,8 +22,6 @@ const APP_CONFIG = {
     stakingVault: "0x1EEC97996986B5D0196a68D341D0C2D2C6D1775B"
   }
 };
-
-APP_CONFIG.rpc = APP_CONFIG.rpcs[0];
 
 const ABI = {
   token: [
@@ -44,6 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initStarfield();
   bindButtons();
   renderActivity();
+  setText("rpc-provider", "Checking...");
 
   await reconnectIfAlreadyConnected();
   await refreshStakingUi();
@@ -280,30 +288,36 @@ function renderActivity() {
 async function getReadProvider() {
   if (cachedReadProvider) return cachedReadProvider;
 
+  setText("rpc-provider", "Checking...");
+
   for (const rpc of APP_CONFIG.rpcs) {
     try {
-      const testProvider = new ethers.JsonRpcProvider(rpc);
+      const testProvider = new ethers.JsonRpcProvider(rpc.url);
       await testProvider.getBlockNumber();
 
       cachedReadProvider = testProvider;
       cachedReadRpc = rpc;
 
-      if (rpc !== APP_CONFIG.rpcs[0]) {
-        showToast("RPC fallback active", "Using backup Sepolia RPC.", "info");
+      setText("rpc-provider", rpc.name);
+
+      if (rpc.url !== APP_CONFIG.rpcs[0].url) {
+        showToast("RPC fallback active", `Using ${rpc.name}.`, "info");
       }
 
       return cachedReadProvider;
     } catch (error) {
-      console.warn("RPC failed:", rpc, error);
+      console.warn("RPC failed:", rpc.name, error);
     }
   }
 
+  setText("rpc-provider", "All RPCs failed");
   throw new Error("All RPC providers failed.");
 }
 
 function resetReadProvider() {
   cachedReadProvider = null;
   cachedReadRpc = null;
+  setText("rpc-provider", "Checking...");
 }
 
 async function getReadContracts() {
