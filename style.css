@@ -922,3 +922,24 @@ footer {
     0 0 8px rgba(212, 175, 55, 0.65),
     0 0 18px rgba(212, 175, 55, 0.25);
 }
+/* Network styles */
+
+.network-mainnet {
+  color: #7ee787;
+  font-weight: 700;
+}
+
+.network-testnet {
+  color: #d4af37;
+  font-weight: 700;
+}
+
+.network-l2 {
+  color: #8ab4ff;
+  font-weight: 700;
+}
+
+.network-unknown {
+  color: #ff7b72;
+  font-weight: 700;
+}
