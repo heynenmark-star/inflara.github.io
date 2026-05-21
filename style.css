@@ -943,3 +943,54 @@ footer {
   color: #ff7b72;
   font-weight: 700;
 }
+/* Environment badge */
+
+.environment-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-top: 18px;
+  padding: 10px 18px;
+
+  border-radius: 999px;
+
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+
+  backdrop-filter: blur(10px);
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+    0 0 18px rgba(0,0,0,0.28),
+    0 0 35px rgba(212,175,55,0.06);
+}
+
+.environment-badge.testnet-mode {
+  color: #f5d46b;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(212,175,55,0.14),
+      rgba(212,175,55,0.06)
+    );
+
+  border-color: rgba(212,175,55,0.32);
+}
+
+.environment-badge.mainnet-mode {
+  color: #7ee787;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(80,220,140,0.14),
+      rgba(80,220,140,0.05)
+    );
+
+  border-color: rgba(80,220,140,0.32);
+}
