@@ -1,6 +1,6 @@
 const APP_CONFIG = {
   chainIdHex: "0xaa36a7",
-  chainName: "Sepolia",
+  chainName: "Ethereum Sepolia",
 
   rpcs: [
     {
@@ -48,12 +48,22 @@ let cachedReadProvider = null;
 let cachedReadRpc = null;
 let currentChainId = null;
 
+const NETWORK_NAMES = {
+  "0x1": "Ethereum Mainnet",
+  "0xaa36a7": "Ethereum Sepolia",
+  "0xa4b1": "Arbitrum One",
+  "0x2105": "Base",
+  "0x89": "Polygon",
+  "0x13881": "Polygon Mumbai"
+};
+
 document.addEventListener("DOMContentLoaded", async () => {
   initStarfield();
   bindButtons();
   renderActivity();
   setText("rpc-provider", "Checking...");
 
+  await updateNetworkDisplay();
   await reconnectIfAlreadyConnected();
   await refreshStakingUi();
 
@@ -162,8 +172,9 @@ function clearApprovalBox() {
 }
 
 function clearRewardMetrics() {
-  setText("estimated-apr", "12.00%");
-  setText("daily-reward-estimate", "0.00 INFL");
+  setText("estimated-apr", "Test estimate");
+  setText("daily-reward-estimate", "Based on placeholder APR");
+  setText("apr-source-text", "Testing value, not live protocol rate");
   setText("reward-status-text", "Waiting for stake");
 }
 
@@ -179,19 +190,24 @@ function updateClaimButtonGlow(earned) {
 }
 
 function updateRewardMetrics(userStaked, earned) {
-  const apr = 12;
+  const placeholderApr = 12;
 
   const staked = Number(ethers.formatUnits(userStaked, 18));
   const earnedValue = Number(ethers.formatUnits(earned, 18));
-  const dailyEstimate = (staked * apr) / 100 / 365;
+  const dailyEstimate = (staked * placeholderApr) / 100 / 365;
 
-  setText("estimated-apr", `${apr.toFixed(2)}%`);
+  setText("estimated-apr", `${placeholderApr.toFixed(2)}% test estimate`);
 
   setText(
     "daily-reward-estimate",
     `${dailyEstimate.toLocaleString(undefined, {
       maximumFractionDigits: 6
-    })} INFL`
+    })} INFL per day`
+  );
+
+  setText(
+    "apr-source-text",
+    "Testing value, not live protocol rate"
   );
 
   if (staked <= 0) {
@@ -200,6 +216,60 @@ function updateRewardMetrics(userStaked, earned) {
     setText("reward-status-text", "Rewards available");
   } else {
     setText("reward-status-text", "Accumulating rewards");
+  }
+}
+
+/* ---------------- NETWORK DETECTION ---------------- */
+
+async function updateNetworkDisplay() {
+  try {
+    if (!window.ethereum) {
+      setText("wallet-network", "No wallet");
+      updateNetworkStyles(null);
+      return;
+    }
+
+    const chainId = await window.ethereum.request({
+      method: "eth_chainId"
+    });
+
+    currentChainId = chainId;
+
+    const networkName =
+      NETWORK_NAMES[chainId] ||
+      `Unknown Network (${chainId})`;
+
+    setText("wallet-network", networkName);
+    updateNetworkStyles(chainId);
+  } catch (error) {
+    console.error(error);
+    setText("wallet-network", "Unknown Network");
+    updateNetworkStyles("unknown");
+  }
+}
+
+function updateNetworkStyles(chainId) {
+  const networkEl = $("wallet-network");
+  if (!networkEl) return;
+
+  networkEl.classList.remove(
+    "network-mainnet",
+    "network-testnet",
+    "network-l2",
+    "network-unknown"
+  );
+
+  if (chainId === "0x1") {
+    networkEl.classList.add("network-mainnet");
+  } else if (chainId === "0xaa36a7") {
+    networkEl.classList.add("network-testnet");
+  } else if (
+    chainId === "0xa4b1" ||
+    chainId === "0x2105"
+  ) {
+    networkEl.classList.add("network-l2");
+  } else {
+    networkEl.classList.add("network-unknown");
   }
 }
 
@@ -374,6 +444,8 @@ async function ensureSepolia() {
     method: "wallet_switchEthereumChain",
     params: [{ chainId: APP_CONFIG.chainIdHex }]
   });
+
+  await updateNetworkDisplay();
 }
 
 function bindButtons() {
@@ -381,6 +453,7 @@ function bindButtons() {
 
   $("refresh-staking")?.addEventListener("click", async () => {
     resetReadProvider();
+    await updateNetworkDisplay();
     await refreshStakingUi();
   });
 
@@ -400,7 +473,15 @@ function bindButtons() {
 
   if (window.ethereum) {
     window.ethereum.on?.("accountsChanged", handleAccountsChanged);
-    window.ethereum.on?.("chainChanged", () => window.location.reload());
+
+    window.ethereum.on?.(
+      "chainChanged",
+      async () => {
+        await updateNetworkDisplay();
+        resetReadProvider();
+        await refreshStakingUi();
+      }
+    );
   }
 }
 
@@ -436,7 +517,7 @@ async function connectWallet() {
     userAddress = await signer.getAddress();
 
     setText("wallet-address", userAddress);
-    setText("wallet-network", APP_CONFIG.chainName);
+    await updateNetworkDisplay();
 
     updateWalletButton();
     renderActivity();
@@ -472,6 +553,7 @@ function disconnectWallet() {
   setText("vault-earned", "—");
   setText("last-updated", "—");
 
+  updateNetworkStyles(null);
   updateStakeButtonDisabled(true);
   clearApprovalBox();
   clearRewardMetrics();
@@ -506,6 +588,7 @@ async function reconnectIfAlreadyConnected() {
       clearRewardMetrics();
       updateClaimButtonGlow(0n);
       renderActivity();
+      await updateNetworkDisplay();
       return;
     }
 
@@ -516,7 +599,7 @@ async function reconnectIfAlreadyConnected() {
     userAddress = await signer.getAddress();
 
     setText("wallet-address", userAddress);
-    setText("wallet-network", APP_CONFIG.chainName);
+    await updateNetworkDisplay();
 
     updateWalletButton();
     renderActivity();
@@ -548,7 +631,7 @@ async function handleAccountsChanged(accounts) {
   signer = await provider.getSigner();
 
   setText("wallet-address", userAddress);
-  setText("wallet-network", APP_CONFIG.chainName);
+  await updateNetworkDisplay();
 
   updateWalletButton();
   renderActivity();
@@ -630,10 +713,11 @@ async function refreshStakingUi() {
 
     if (!userAddress) {
       setText("wallet-address", "Not connected");
-      setText("wallet-network", "—");
       setText("wallet-infl-balance", "—");
       setText("vault-user-staked", "—");
       setText("vault-earned", "—");
+
+      await updateNetworkDisplay();
 
       updateWalletButton();
       updateStakeButtonDisabled(true);
@@ -657,6 +741,7 @@ async function refreshStakingUi() {
     updateClaimButtonGlow(earned);
     updateRewardMetrics(userStaked, earned);
     updateLastUpdated();
+    await updateNetworkDisplay();
 
     await updateStakeButtonFromAllowance();
   } catch (error) {
@@ -731,7 +816,7 @@ async function approveInfl() {
 
     const { token } = await getWriteContracts();
 
-    setStatus("Waiting for wallet confirmation...");
+    setStatus("Waiting for wallet confirmation.");
     showToast("Confirm approval", "Approve the transaction in your wallet.", "info");
 
     const tx = await token.approve(
@@ -739,7 +824,7 @@ async function approveInfl() {
       amount
     );
 
-    setStatus("Waiting for blockchain confirmation...");
+    setStatus("Waiting for blockchain confirmation.");
     showToast("Approval submitted", "Waiting for blockchain confirmation.", "info");
 
     await tx.wait();
@@ -789,12 +874,12 @@ async function stakeInfl() {
 
     const { vault } = await getWriteContracts();
 
-    setStatus("Waiting for wallet confirmation...");
+    setStatus("Waiting for wallet confirmation.");
     showToast("Confirm stake", "Approve the staking transaction in your wallet.", "info");
 
     const tx = await vault.stake(amount);
 
-    setStatus("Waiting for blockchain confirmation...");
+    setStatus("Waiting for blockchain confirmation.");
     showToast("Stake submitted", "Waiting for blockchain confirmation.", "info");
 
     await tx.wait();
@@ -839,12 +924,12 @@ async function claimRewards() {
       earnedBeforeClaim = await vault.earned(userAddress);
     }
 
-    setStatus("Waiting for wallet confirmation...");
+    setStatus("Waiting for wallet confirmation.");
     showToast("Confirm claim", "Approve the claim transaction in your wallet.", "info");
 
     const tx = await vault.claimRewards();
 
-    setStatus("Waiting for blockchain confirmation...");
+    setStatus("Waiting for blockchain confirmation.");
     showToast("Claim submitted", "Waiting for blockchain confirmation.", "info");
 
     await tx.wait();
@@ -886,12 +971,12 @@ async function withdrawInfl() {
 
     const { vault } = await getWriteContracts();
 
-    setStatus("Waiting for wallet confirmation...");
+    setStatus("Waiting for wallet confirmation.");
     showToast("Confirm withdrawal", "Approve the withdrawal in your wallet.", "info");
 
     const tx = await vault.withdraw(amount);
 
-    setStatus("Waiting for blockchain confirmation...");
+    setStatus("Waiting for blockchain confirmation.");
     showToast("Withdrawal submitted", "Waiting for blockchain confirmation.", "info");
 
     await tx.wait();
@@ -945,12 +1030,12 @@ async function exitStaking() {
       stakedBeforeExit = await vault.balanceOf(userAddress);
     }
 
-    setStatus("Waiting for wallet confirmation...");
+    setStatus("Waiting for wallet confirmation.");
     showToast("Confirm exit", "Approve exit all in your wallet.", "info");
 
     const tx = await vault.exit();
 
-    setStatus("Waiting for blockchain confirmation...");
+    setStatus("Waiting for blockchain confirmation.");
     showToast("Exit submitted", "Waiting for blockchain confirmation.", "info");
 
     await tx.wait();
