@@ -12,8 +12,9 @@
 
 <body>
   <canvas id="starfield"></canvas>
+
   <div id="toast-root" class="toast-root"></div>
-  
+
   <header class="topbar">
     <div class="nav-brand">
       <a href="index.html">INFLARA</a>
@@ -32,6 +33,7 @@
   </header>
 
   <main>
+
     <section class="hero fade-in">
       <h1>Staking</h1>
 
@@ -52,53 +54,110 @@
           Refresh
         </button>
       </div>
-      <p class="note">
-  Last updated: <span id="last-updated">—</span>
-</p>
 
       <p class="note">
-        Wallet: <span id="wallet-address">Not connected</span>
+        Wallet:
+        <span id="wallet-address">
+          Not connected
+        </span>
       </p>
 
       <p class="note">
-        Network: <span id="wallet-network">—</span>
+        Network:
+        <span id="wallet-network">
+          —
+        </span>
+      </p>
+
+      <p class="note">
+        Last updated:
+        <span id="last-updated">
+          —
+        </span>
       </p>
     </section>
+
+    <!-- TESTNET WARNING -->
+
+    <section class="section fade-in">
+      <div class="dashboard-box testnet-warning">
+        <h3>Sepolia Testnet Only</h3>
+
+        <p>
+          This staking page is currently connected to Ethereum Sepolia testnet.
+        </p>
+
+        <p>
+          INFL tokens on this network are for testing purposes only and have no real market value.
+        </p>
+      </div>
+    </section>
+
+    <!-- VAULT STATUS -->
 
     <section class="section fade-in">
       <h2>Vault Status</h2>
 
       <div class="stats-grid">
+
         <div class="stat-card">
-          <div id="wallet-infl-balance" class="stat-number">—</div>
-          <div class="stat-label">Wallet INFL</div>
+          <div id="wallet-infl-balance" class="stat-number">
+            —
+          </div>
+
+          <div class="stat-label">
+            Wallet INFL
+          </div>
         </div>
 
         <div class="stat-card">
-          <div id="vault-user-staked" class="stat-number">—</div>
-          <div class="stat-label">Your Staked INFL</div>
+          <div id="vault-user-staked" class="stat-number">
+            —
+          </div>
+
+          <div class="stat-label">
+            Your Staked INFL
+          </div>
         </div>
 
         <div class="stat-card">
-          <div id="vault-earned" class="stat-number">—</div>
-          <div class="stat-label">Earned Rewards</div>
+          <div id="vault-earned" class="stat-number">
+            —
+          </div>
+
+          <div class="stat-label">
+            Earned Rewards
+          </div>
         </div>
 
         <div class="stat-card">
-          <div id="vault-total-staked" class="stat-number">—</div>
-          <div class="stat-label">Total Staked</div>
+          <div id="vault-total-staked" class="stat-number">
+            —
+          </div>
+
+          <div class="stat-label">
+            Total Staked
+          </div>
         </div>
+
       </div>
     </section>
+
+    <!-- STAKE -->
 
     <section class="section fade-in">
       <h2>Stake INFL</h2>
 
       <div class="dashboard-box">
+
         <div class="stake-controls">
-          <label for="stake-amount">Amount to stake</label>
+
+          <label for="stake-amount">
+            Amount to stake
+          </label>
 
           <div class="input-with-button">
+
             <input
               id="stake-amount"
               type="number"
@@ -107,15 +166,26 @@
               placeholder="100"
             />
 
-            <button id="max-stake" class="mini-button" type="button">
+            <button
+              id="max-stake"
+              class="mini-button"
+              type="button"
+            >
               MAX
             </button>
+
           </div>
 
           <div class="slider-section">
+
             <div class="slider-header">
-              <span>Stake Percentage</span>
-              <strong id="slider-percent">0%</strong>
+              <span>
+                Stake Percentage
+              </span>
+
+              <strong id="slider-percent">
+                0%
+              </strong>
             </div>
 
             <input
@@ -134,71 +204,120 @@
               <span>75%</span>
               <span>100%</span>
             </div>
+
           </div>
         </div>
 
         <div class="hero-buttons">
-          <button id="approve-infl" class="button" type="button">
+
+          <button
+            id="approve-infl"
+            class="button"
+            type="button"
+          >
             Approve
           </button>
 
-          <button id="stake-infl" class="button" type="button">
+          <button
+            id="stake-infl"
+            class="button"
+            type="button"
+          >
             Stake
           </button>
+
         </div>
       </div>
     </section>
 
+    <!-- APPROVAL STATUS -->
+
     <section class="section fade-in">
-      <h2>Withdraw / Claim</h2>
 
       <div class="approval-box">
+
         <div class="approval-title">
           Approval Status
         </div>
 
         <div class="approval-row">
-          <span>Approved Amount</span>
-          <strong id="approved-amount">0 INFL</strong>
+          <span>
+            Approved Amount
+          </span>
+
+          <strong id="approved-amount">
+            0 INFL
+          </strong>
         </div>
 
         <div class="approval-row">
-          <span>Stake Status</span>
+          <span>
+            Stake Status
+          </span>
+
           <strong id="approval-status-text">
             Approval required
           </strong>
         </div>
+
       </div>
 
+    </section>
+
+    <!-- REWARD METRICS -->
+
+    <section class="section fade-in">
+
       <div class="rewards-box">
+
         <div class="rewards-title">
           Reward Metrics
         </div>
 
         <div class="rewards-row">
-          <span>Estimated APR</span>
+          <span>
+            Estimated APR
+          </span>
+
           <strong id="estimated-apr">
             12.00%
           </strong>
         </div>
 
         <div class="rewards-row">
-          <span>Daily Reward Estimate</span>
+          <span>
+            Daily Reward Estimate
+          </span>
+
           <strong id="daily-reward-estimate">
             0.00 INFL
           </strong>
         </div>
 
         <div class="rewards-row">
-          <span>Reward Status</span>
+          <span>
+            Reward Status
+          </span>
+
           <strong id="reward-status-text">
             Waiting for stake
           </strong>
         </div>
+
       </div>
 
+    </section>
+
+    <!-- WITHDRAW -->
+
+    <section class="section fade-in">
+      <h2>Withdraw / Claim</h2>
+
       <div class="dashboard-box">
-        <label for="withdraw-amount">Amount to withdraw</label>
+
+        <label for="withdraw-amount">
+          Amount to withdraw
+        </label>
 
         <input
           id="withdraw-amount"
@@ -209,24 +328,42 @@
         />
 
         <div class="hero-buttons">
-          <button id="claim-rewards" class="button" type="button">
+
+          <button
+            id="claim-rewards"
+            class="button"
+            type="button"
+          >
             Claim Rewards
           </button>
 
-          <button id="withdraw-infl" class="button secondary" type="button">
+          <button
+            id="withdraw-infl"
+            class="button secondary"
+            type="button"
+          >
             Withdraw
           </button>
 
-          <button id="exit-staking" class="button secondary" type="button">
+          <button
+            id="exit-staking"
+            class="button secondary"
+            type="button"
+          >
             Exit All
           </button>
+
         </div>
       </div>
 
-      <p class="note" id="staking-status">Ready.</p>
+      <p class="note" id="staking-status">
+        Ready.
+      </p>
+
     </section>
+
   </main>
 
-<script src="./script.js?v=staking-last-updated-1"></script>
+  <script src="./script.js?v=staking-last-updated-1"></script>
 </body>
 </html>
