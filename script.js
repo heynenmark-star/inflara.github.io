@@ -46,6 +46,7 @@ let userAddress = null;
 let manuallyDisconnected = false;
 let cachedReadProvider = null;
 let cachedReadRpc = null;
+let currentChainId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   initStarfield();
