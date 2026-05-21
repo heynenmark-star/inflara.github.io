@@ -40,6 +40,7 @@ let manuallyDisconnected = false;
 document.addEventListener("DOMContentLoaded", async () => {
   initStarfield();
   bindButtons();
+  renderActivity();
 
   await reconnectIfAlreadyConnected();
   await refreshStakingUi();
@@ -138,6 +139,14 @@ function formatInfl(raw) {
   })} INFL`;
 }
 
+function formatAmountText(raw) {
+  const value = Number(ethers.formatUnits(raw, 18));
+
+  return `${value.toLocaleString(undefined, {
+    maximumFractionDigits: 6
+  })} INFL`;
+}
+
 function parseAmount(inputId) {
   const value = $(inputId)?.value;
 
@@ -203,6 +212,90 @@ function updateRewardMetrics(userStaked, earned) {
   }
 }
 
+/* ---------------- RECENT ACTIVITY ---------------- */
+
+function getActivityStorageKey() {
+  return userAddress
+    ? `inflara_activity_${userAddress.toLowerCase()}`
+    : "inflara_activity_guest";
+}
+
+function loadActivity() {
+  try {
+    const raw = localStorage.getItem(getActivityStorageKey());
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveActivity(items) {
+  localStorage.setItem(
+    getActivityStorageKey(),
+    JSON.stringify(items.slice(0, 6))
+  );
+}
+
+function addActivity(type, amount, hash) {
+  const items = loadActivity();
+
+  items.unshift({
+    type,
+    amount,
+    hash,
+    time: new Date().toISOString()
+  });
+
+  saveActivity(items);
+  renderActivity();
+}
+
+function formatActivityTime(iso) {
+  const date = new Date(iso);
+  return date.toLocaleTimeString();
+}
+
+function renderActivity() {
+  const list = $("activity-list");
+  if (!list) return;
+
+  const items = loadActivity();
+
+  if (!items.length) {
+    list.innerHTML = `
+      <div class="activity-empty">
+        No staking transactions yet.
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = items
+    .map(
+      (item) => `
+        <div class="activity-card">
+          <div class="activity-top">
+            <span class="activity-type">${item.type}</span>
+            <span class="activity-time">${formatActivityTime(item.time)}</span>
+          </div>
+
+          <div class="activity-amount">
+            ${item.amount}
+          </div>
+
+          <div class="activity-link">
+            <a href="${getTxLink(item.hash)}" target="_blank" rel="noopener noreferrer">
+              View on Etherscan
+            </a>
+          </div>
+        </div>
+      `
+    )
+    .join("");
+}
+
+/* ---------------- CONTRACTS ---------------- */
+
 function getReadProvider() {
   return new ethers.JsonRpcProvider(APP_CONFIG.rpc);
 }
@@ -244,6 +337,8 @@ async function getWriteContracts() {
     )
   };
 }
+
+/* ---------------- WALLET ---------------- */
 
 async function ensureSepolia() {
   if (!window.ethereum) {
@@ -338,6 +433,7 @@ async function connectWallet() {
     setText("wallet-network", APP_CONFIG.chainName);
 
     updateWalletButton();
+    renderActivity();
 
     setStatus("Wallet connected.");
     showToast("Wallet connected", shortAddress(userAddress), "success");
@@ -375,6 +471,7 @@ function disconnectWallet() {
   clearRewardMetrics();
   updateClaimButtonGlow(0n);
   updateWalletButton();
+  renderActivity();
 
   setStatus("Wallet disconnected.");
   showToast("Wallet disconnected", "Frontend session cleared.", "info");
@@ -391,6 +488,7 @@ async function reconnectIfAlreadyConnected() {
       clearApprovalBox();
       clearRewardMetrics();
       updateClaimButtonGlow(0n);
+      renderActivity();
       return;
     }
 
@@ -405,6 +503,7 @@ async function reconnectIfAlreadyConnected() {
       clearApprovalBox();
       clearRewardMetrics();
       updateClaimButtonGlow(0n);
+      renderActivity();
       return;
     }
 
@@ -418,6 +517,7 @@ async function reconnectIfAlreadyConnected() {
     setText("wallet-network", APP_CONFIG.chainName);
 
     updateWalletButton();
+    renderActivity();
 
     setStatus("Wallet connected.");
   } catch (error) {
@@ -427,6 +527,7 @@ async function reconnectIfAlreadyConnected() {
     clearApprovalBox();
     clearRewardMetrics();
     updateClaimButtonGlow(0n);
+    renderActivity();
   }
 }
 
@@ -449,12 +550,15 @@ async function handleAccountsChanged(accounts) {
   setText("wallet-network", APP_CONFIG.chainName);
 
   updateWalletButton();
+  renderActivity();
 
   setStatus("Wallet changed.");
   showToast("Wallet changed", shortAddress(userAddress), "info");
 
   await refreshStakingUi();
 }
+
+/* ---------------- UI ---------------- */
 
 function updateStakeButtonDisabled(disabled) {
   const stakeButton = $("stake-infl");
@@ -600,6 +704,8 @@ async function refreshStakingUi() {
   }
 }
 
+/* ---------------- TRANSACTIONS ---------------- */
+
 async function fillMaxStake() {
   try {
     if (!userAddress) {
@@ -707,8 +813,10 @@ async function approveInfl() {
       "Approving..."
     );
 
+  let amount = 0n;
+
   try {
-    const amount =
+    amount =
       parseAmount(
         "stake-amount"
       );
@@ -746,6 +854,8 @@ async function approveInfl() {
       "success"
     );
 
+    addActivity("Approve", formatAmountText(amount), tx.hash);
+
     window.open(getTxLink(tx.hash), "_blank");
 
     await refreshStakingUi();
@@ -776,6 +886,8 @@ async function stakeInfl() {
       "Staking..."
     );
 
+  let amount = 0n;
+
   try {
     await updateStakeButtonFromAllowance();
 
@@ -784,7 +896,7 @@ async function stakeInfl() {
       throw new Error("Approve INFL before staking.");
     }
 
-    const amount =
+    amount =
       parseAmount(
         "stake-amount"
       );
@@ -821,6 +933,8 @@ async function stakeInfl() {
       "success"
     );
 
+    addActivity("Stake", formatAmountText(amount), tx.hash);
+
     window.open(getTxLink(tx.hash), "_blank");
 
     await refreshStakingUi();
@@ -851,9 +965,16 @@ async function claimRewards() {
       "Claiming..."
     );
 
+  let earnedBeforeClaim = 0n;
+
   try {
     const { vault } =
       await getWriteContracts();
+
+    if (userAddress) {
+      earnedBeforeClaim =
+        await vault.earned(userAddress);
+    }
 
     setStatus(
       "Waiting for wallet confirmation..."
@@ -881,6 +1002,8 @@ async function claimRewards() {
       `Your staking rewards were claimed. ${getTxLink(tx.hash)}`,
       "success"
     );
+
+    addActivity("Claim Rewards", formatAmountText(earnedBeforeClaim), tx.hash);
 
     window.open(getTxLink(tx.hash), "_blank");
 
@@ -910,8 +1033,10 @@ async function withdrawInfl() {
       "Withdrawing..."
     );
 
+  let amount = 0n;
+
   try {
-    const amount =
+    amount =
       parseAmount(
         "withdraw-amount"
       );
@@ -947,6 +1072,8 @@ async function withdrawInfl() {
       `INFL withdrawn successfully. ${getTxLink(tx.hash)}`,
       "success"
     );
+
+    addActivity("Withdraw", formatAmountText(amount), tx.hash);
 
     window.open(getTxLink(tx.hash), "_blank");
 
@@ -986,9 +1113,16 @@ async function exitStaking() {
       "Exiting..."
     );
 
+  let stakedBeforeExit = 0n;
+
   try {
     const { vault } =
       await getWriteContracts();
+
+    if (userAddress) {
+      stakedBeforeExit =
+        await vault.balanceOf(userAddress);
+    }
 
     setStatus(
       "Waiting for wallet confirmation..."
@@ -1017,6 +1151,8 @@ async function exitStaking() {
       "success"
     );
 
+    addActivity("Exit All", formatAmountText(stakedBeforeExit), tx.hash);
+
     window.open(getTxLink(tx.hash), "_blank");
 
     await refreshStakingUi();
@@ -1037,6 +1173,8 @@ async function exitStaking() {
     }
   }
 }
+
+/* ---------------- STARFIELD ---------------- */
 
 function initStarfield() {
   const canvas =
