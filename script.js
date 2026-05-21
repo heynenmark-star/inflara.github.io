@@ -56,6 +56,9 @@ const NETWORK_NAMES = {
   "0x89": "Polygon",
   "0x13881": "Polygon Mumbai"
 };
+const ENVIRONMENT_CONFIG = {
+  mode: "testnet"
+};
 
 document.addEventListener("DOMContentLoaded", async () => {
   initStarfield();
