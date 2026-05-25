@@ -45,6 +45,7 @@ let provider = null;
 let signer = null;
 let userAddress = null;
 let readProvider = null;
+let activeRpcName = "—";
 
 const NETWORK_NAMES = {
   "0x1": "Ethereum Mainnet",
@@ -59,6 +60,9 @@ document.addEventListener("DOMContentLoaded", () => {
   bindButtons();
   updateEnvironmentBadge();
   updateWalletButton();
+
+  setText("rpc-provider", "Checking...");
+
   updateNetworkDisplay();
   refreshStakingUi();
 
@@ -87,7 +91,7 @@ function getWalletProvider() {
 
   if (Array.isArray(window.ethereum.providers)) {
     const rabby = window.ethereum.providers.find((p) => p.isRabby);
-    const metamask = window.ethereum.providers.find((p) => p.isMetaMask);
+    const metamask = window.ethereum.providers.find((p) => p.isMetaMask && !p.isRabby);
 
     return rabby || metamask || window.ethereum.providers[0];
   }
@@ -136,7 +140,13 @@ function bindButtons() {
     };
   }
 
-  $("refresh-staking")?.addEventListener("click", refreshStakingUi);
+  $("refresh-staking")?.addEventListener("click", async () => {
+    readProvider = null;
+    setText("rpc-provider", "Checking...");
+    await updateNetworkDisplay();
+    await refreshStakingUi();
+  });
+
   $("approve-infl")?.addEventListener("click", approveInfl);
   $("stake-infl")?.addEventListener("click", stakeInfl);
   $("claim-rewards")?.addEventListener("click", claimRewards);
@@ -144,12 +154,7 @@ function bindButtons() {
   $("exit-staking")?.addEventListener("click", exitStaking);
   $("max-stake")?.addEventListener("click", fillMaxStake);
   $("stake-amount")?.addEventListener("input", updateApprovalStatus);
-
-  const slider = $("stake-slider");
-
-  if (slider) {
-    slider.addEventListener("input", updateStakeFromSlider);
-  }
+  $("stake-slider")?.addEventListener("input", updateStakeFromSlider);
 
   const eth = getWalletProvider();
 
@@ -161,7 +166,13 @@ function bindButtons() {
       }
 
       userAddress = accounts[0];
+
+      provider = new ethers.BrowserProvider(eth);
+      signer = await provider.getSigner();
+
       setText("wallet-address", userAddress);
+      setText("wallet-provider", getWalletName());
+
       updateWalletButton();
       await refreshStakingUi();
     });
@@ -175,6 +186,10 @@ function bindButtons() {
 
 async function connectWallet() {
   try {
+    if (typeof ethers === "undefined") {
+      throw new Error("Ethers is not loaded. Check staking.html script tags.");
+    }
+
     const eth = getWalletProvider();
 
     if (!eth) {
@@ -222,6 +237,8 @@ function disconnectWallet() {
   setText("wallet-infl-balance", "—");
   setText("vault-user-staked", "—");
   setText("vault-earned", "—");
+  setText("approved-amount", "0 INFL");
+  setText("approval-status-text", "Connect wallet first");
 
   updateWalletButton();
   setStatus("Wallet disconnected.");
@@ -295,16 +312,36 @@ async function updateNetworkDisplay() {
   }
 }
 
-function getReadProvider() {
-  if (!readProvider) {
-    readProvider = new ethers.JsonRpcProvider(APP_CONFIG.rpcs[0].url);
+async function getReadProvider() {
+  if (readProvider) {
+    return readProvider;
   }
 
-  return readProvider;
+  setText("rpc-provider", "Checking...");
+
+  for (const rpc of APP_CONFIG.rpcs) {
+    try {
+      const testProvider = new ethers.JsonRpcProvider(rpc.url);
+
+      await testProvider.getBlockNumber();
+
+      readProvider = testProvider;
+      activeRpcName = rpc.name;
+
+      setText("rpc-provider", activeRpcName);
+
+      return readProvider;
+    } catch (error) {
+      console.warn("RPC failed:", rpc.name, error);
+    }
+  }
+
+  setText("rpc-provider", "All RPCs failed");
+  throw new Error("All RPC providers failed.");
 }
 
-function getReadContracts() {
-  const rpc = getReadProvider();
+async function getReadContracts() {
+  const rpc = await getReadProvider();
 
   return {
     token: new ethers.Contract(APP_CONFIG.contracts.infl, ABI.token, rpc),
@@ -348,7 +385,7 @@ async function refreshStakingUi() {
       return;
     }
 
-    const { token, vault } = getReadContracts();
+    const { token, vault } = await getReadContracts();
 
     const totalStaked = await vault.totalStaked();
 
@@ -359,6 +396,8 @@ async function refreshStakingUi() {
       setText("wallet-infl-balance", "—");
       setText("vault-user-staked", "—");
       setText("vault-earned", "—");
+      setText("approved-amount", "0 INFL");
+      setText("approval-status-text", "Connect wallet first");
       return;
     }
 
@@ -376,7 +415,7 @@ async function refreshStakingUi() {
     await updateApprovalStatus();
   } catch (error) {
     console.error(error);
-    setStatus("Could not refresh staking data.");
+    setStatus(error.shortMessage || error.message || "Could not refresh staking data.");
   }
 }
 
@@ -393,7 +432,7 @@ async function updateApprovalStatus() {
 
     const amountText = $("stake-amount")?.value;
 
-    const { token } = getReadContracts();
+    const { token } = await getReadContracts();
 
     const allowance = await token.allowance(
       userAddress,
@@ -429,7 +468,7 @@ async function fillMaxStake() {
       await connectWallet();
     }
 
-    const { token } = getReadContracts();
+    const { token } = await getReadContracts();
     const balance = await token.balanceOf(userAddress);
 
     const value = Number(ethers.formatUnits(balance, 18));
@@ -445,7 +484,7 @@ async function fillMaxStake() {
     await updateApprovalStatus();
   } catch (error) {
     console.error(error);
-    setStatus("Could not fill max stake.");
+    setStatus(error.shortMessage || error.message || "Could not fill max stake.");
   }
 }
 
@@ -459,7 +498,7 @@ async function updateStakeFromSlider(event) {
     const percent = Number(event.target.value);
     setText("slider-percent", `${percent}%`);
 
-    const { token } = getReadContracts();
+    const { token } = await getReadContracts();
     const balance = await token.balanceOf(userAddress);
 
     const balanceValue = Number(ethers.formatUnits(balance, 18));
