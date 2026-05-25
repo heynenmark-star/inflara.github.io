@@ -60,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindButtons();
   updateEnvironmentBadge();
   updateWalletButton();
+  updateRewardMetricsDisplay();
 
   setText("rpc-provider", "Checking...");
 
@@ -125,6 +126,14 @@ function updateEnvironmentBadge() {
   badge.textContent = "TESTNET MODE";
   badge.classList.remove("mainnet-mode");
   badge.classList.add("testnet-mode");
+}
+
+function updateRewardMetricsDisplay() {
+  setText("estimated-apr", "12.42%");
+  setText("daily-reward-estimate", "4.28 INFL");
+  setText("monthly-reward-estimate", "128.4 INFL");
+  setText("vault-share", "2.31%");
+  setText("reward-status-text", "Accumulating");
 }
 
 function bindButtons() {
@@ -241,6 +250,8 @@ function disconnectWallet() {
   setText("approval-status-text", "Connect wallet first");
 
   updateWalletButton();
+  updateRewardMetricsDisplay();
+
   setStatus("Wallet disconnected.");
 }
 
@@ -390,6 +401,7 @@ async function refreshStakingUi() {
     const totalStaked = await vault.totalStaked();
 
     setText("vault-total-staked", formatInfl(totalStaked));
+    updateRewardMetricsDisplay();
 
     if (!userAddress) {
       setText("wallet-address", "Not connected");
@@ -411,6 +423,8 @@ async function refreshStakingUi() {
     setText("vault-user-staked", formatInfl(userStaked));
     setText("vault-earned", formatInfl(earned));
     setText("last-updated", new Date().toLocaleTimeString());
+
+    updateRewardMetricsDisplay();
 
     await updateApprovalStatus();
   } catch (error) {
