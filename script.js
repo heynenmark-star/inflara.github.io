@@ -23,10 +23,6 @@ const APP_CONFIG = {
   }
 };
 
-const ENVIRONMENT_CONFIG = {
-  mode: "testnet"
-};
-
 const ABI = {
   token: [
     "function balanceOf(address owner) view returns (uint256)",
@@ -48,33 +44,23 @@ const ABI = {
 let provider = null;
 let signer = null;
 let userAddress = null;
-let manuallyDisconnected = false;
-let cachedReadProvider = null;
-let cachedReadRpc = null;
-let currentChainId = null;
-let walletType = "Unknown";
-let selectedEthereumProvider = null;
+let readProvider = null;
 
 const NETWORK_NAMES = {
   "0x1": "Ethereum Mainnet",
   "0xaa36a7": "Ethereum Sepolia",
   "0xa4b1": "Arbitrum One",
   "0x2105": "Base",
-  "0x89": "Polygon",
-  "0x13881": "Polygon Mumbai"
+  "0x89": "Polygon"
 };
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   initStarfield();
   bindButtons();
-  renderActivity();
   updateEnvironmentBadge();
-  updateWalletProviderDisplay();
-  setText("rpc-provider", "Checking...");
-
-  await updateNetworkDisplay();
-  await reconnectIfAlreadyConnected();
-  await refreshStakingUi();
+  updateWalletButton();
+  updateNetworkDisplay();
+  refreshStakingUi();
 
   setInterval(refreshStakingUi, 10000);
 });
@@ -85,145 +71,42 @@ function $(id) {
 
 function setText(id, value) {
   const el = $(id);
-
-  if (el) {
-    el.textContent = value;
-  }
+  if (el) el.textContent = value;
 }
 
 function setStatus(message) {
   setText("staking-status", message);
 }
 
-function setInputValue(id, value) {
-  const input = $(id);
-
-  if (input) {
-    input.value = value;
-  }
-}
-
-function updateLastUpdated() {
-  setText(
-    "last-updated",
-    new Date().toLocaleTimeString()
-  );
-}
-
-function getTxLink(hash) {
-  return `https://sepolia.etherscan.io/tx/${hash}`;
-}
-
-function showToast(title, message, type = "info") {
-  const root = $("toast-root");
-
-  if (!root) return;
-
-  const toast = document.createElement("div");
-
-  toast.className = `toast ${type}`;
-
-  toast.innerHTML = `
-    <div class="toast-title">${title}</div>
-    <div class="toast-message">${message}</div>
-  `;
-
-  root.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.transform = "translateY(8px)";
-  }, 4200);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 4800);
-}
-
-function setButtonLoading(buttonId, loadingText) {
-  const button = $(buttonId);
-
-  if (!button) return null;
-
-  const originalText = button.textContent;
-
-  button.disabled = true;
-  button.textContent = loadingText;
-
-  return () => {
-    button.disabled = false;
-    button.textContent = originalText;
-  };
-}
-
 function shortAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function getAvailableWalletProviders() {
-  if (!window.ethereum) {
-    return [];
-  }
+function getWalletProvider() {
+  if (!window.ethereum) return null;
 
   if (Array.isArray(window.ethereum.providers)) {
-    return window.ethereum.providers;
+    const rabby = window.ethereum.providers.find((p) => p.isRabby);
+    const metamask = window.ethereum.providers.find((p) => p.isMetaMask);
+
+    return rabby || metamask || window.ethereum.providers[0];
   }
 
-  return [window.ethereum];
+  return window.ethereum;
 }
 
-function chooseEthereumProvider() {
-  const providers = getAvailableWalletProviders();
+function getWalletName() {
+  const eth = getWalletProvider();
 
-  if (!providers.length) {
-    selectedEthereumProvider = null;
-    walletType = "No wallet";
-    return null;
-  }
+  if (!eth) return "No wallet";
+  if (eth.isRabby) return "Rabby";
+  if (eth.isMetaMask) return "MetaMask";
 
-  const rabbyProvider = providers.find((p) => p.isRabby);
-  const metaMaskProvider = providers.find((p) => p.isMetaMask && !p.isRabby);
-
-  selectedEthereumProvider =
-    rabbyProvider ||
-    metaMaskProvider ||
-    providers[0];
-
-  walletType = detectWalletType(selectedEthereumProvider);
-
-  return selectedEthereumProvider;
-}
-
-function getEthereumProvider() {
-  return selectedEthereumProvider || chooseEthereumProvider();
-}
-
-function detectWalletType(ethProvider = null) {
-  const eth = ethProvider || selectedEthereumProvider || chooseEthereumProvider();
-
-  if (eth?.isRabby) {
-    return "Rabby";
-  }
-
-  if (eth?.isMetaMask) {
-    return "MetaMask";
-  }
-
-  if (eth) {
-    return "Browser Wallet";
-  }
-
-  return "No wallet";
-}
-
-function updateWalletProviderDisplay() {
-  walletType = detectWalletType();
-  setText("wallet-provider", walletType);
+  return "Browser Wallet";
 }
 
 function updateWalletButton() {
   const btn = $("connect-wallet");
-
   if (!btn) return;
 
   btn.textContent = userAddress
@@ -231,385 +114,139 @@ function updateWalletButton() {
     : "Connect Wallet";
 }
 
-function formatInfl(raw) {
-  const value = Number(
-    ethers.formatUnits(raw, 18)
-  );
-
-  return `${value.toLocaleString(undefined, {
-    maximumFractionDigits: 6
-  })} INFL`;
-}
-
-function formatAmountText(raw) {
-  return formatInfl(raw);
-}
-
-function parseAmount(inputId) {
-  const value = $(inputId)?.value;
-
-  if (!value || Number(value) <= 0) {
-    throw new Error("Enter an amount greater than 0");
-  }
-
-  return ethers.parseUnits(value, 18);
-}
-
-function clearApprovalBox() {
-  setText("approved-amount", "0 INFL");
-  setText("approval-status-text", "Approval required");
-}
-
-function clearRewardMetrics() {
-  setText("estimated-apr", "Test estimate");
-  setText("daily-reward-estimate", "Based on placeholder APR");
-  setText("apr-source-text", "Testing value, not live protocol rate");
-  setText("reward-status-text", "Waiting for stake");
-}
-
-function updateClaimButtonGlow(earned) {
-  const claimButton = $("claim-rewards");
-
-  if (!claimButton) return;
-
-  if (earned > 0n) {
-    claimButton.classList.add("claim-ready");
-  } else {
-    claimButton.classList.remove("claim-ready");
-  }
-}
-
-function updateRewardMetrics(userStaked, earned) {
-  const placeholderApr = 12;
-
-  const staked = Number(
-    ethers.formatUnits(userStaked, 18)
-  );
-
-  const earnedValue = Number(
-    ethers.formatUnits(earned, 18)
-  );
-
-  const dailyEstimate =
-    (staked * placeholderApr) / 100 / 365;
-
-  setText(
-    "estimated-apr",
-    `${placeholderApr.toFixed(2)}% test estimate`
-  );
-
-  setText(
-    "daily-reward-estimate",
-    `${dailyEstimate.toLocaleString(undefined, {
-      maximumFractionDigits: 6
-    })} INFL per day`
-  );
-
-  setText(
-    "apr-source-text",
-    "Testing value, not live protocol rate"
-  );
-
-  if (staked <= 0) {
-    setText("reward-status-text", "Waiting for stake");
-  } else if (earnedValue > 0) {
-    setText("reward-status-text", "Rewards available");
-  } else {
-    setText("reward-status-text", "Accumulating rewards");
-  }
-}
-
-/* ---------------- ENVIRONMENT BADGE ---------------- */
-
 function updateEnvironmentBadge() {
   const badge = $("environment-badge");
-
   if (!badge) return;
 
-  badge.classList.remove(
-    "testnet-mode",
-    "mainnet-mode"
-  );
-
-  if (ENVIRONMENT_CONFIG.mode === "mainnet") {
-    badge.textContent = "MAINNET LIVE";
-    badge.classList.add("mainnet-mode");
-  } else {
-    badge.textContent = "TESTNET MODE";
-    badge.classList.add("testnet-mode");
-  }
+  badge.textContent = "TESTNET MODE";
+  badge.classList.remove("mainnet-mode");
+  badge.classList.add("testnet-mode");
 }
 
-/* ---------------- NETWORK DETECTION ---------------- */
+function bindButtons() {
+  const connectBtn = $("connect-wallet");
 
-async function updateNetworkDisplay() {
-  try {
-    const eth = getEthereumProvider();
-
-    if (!eth) {
-      setText("wallet-network", "No wallet");
-      updateWalletProviderDisplay();
-      updateNetworkStyles(null);
-      return;
-    }
-
-    const chainId =
-      await eth.request({
-        method: "eth_chainId"
-      });
-
-    currentChainId = chainId;
-
-    const networkName =
-      NETWORK_NAMES[chainId] ||
-      `Unknown Network (${chainId})`;
-
-    setText("wallet-network", networkName);
-    updateWalletProviderDisplay();
-
-    updateNetworkStyles(chainId);
-  } catch (error) {
-    console.error(error);
-
-    setText("wallet-network", "Unknown Network");
-    updateNetworkStyles("unknown");
-  }
-}
-
-function updateNetworkStyles(chainId) {
-  const networkEl = $("wallet-network");
-
-  if (!networkEl) return;
-
-  networkEl.classList.remove(
-    "network-mainnet",
-    "network-testnet",
-    "network-l2",
-    "network-unknown"
-  );
-
-  if (chainId === "0x1") {
-    networkEl.classList.add("network-mainnet");
-  } else if (chainId === "0xaa36a7") {
-    networkEl.classList.add("network-testnet");
-  } else if (
-    chainId === "0xa4b1" ||
-    chainId === "0x2105"
-  ) {
-    networkEl.classList.add("network-l2");
-  } else {
-    networkEl.classList.add("network-unknown");
-  }
-}
-
-/* ---------------- RECENT ACTIVITY ---------------- */
-
-function getActivityStorageKey() {
-  return userAddress
-    ? `inflara_activity_${userAddress.toLowerCase()}`
-    : "inflara_activity_guest";
-}
-
-function loadActivity() {
-  try {
-    const raw =
-      localStorage.getItem(
-        getActivityStorageKey()
-      );
-
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveActivity(items) {
-  localStorage.setItem(
-    getActivityStorageKey(),
-    JSON.stringify(items.slice(0, 6))
-  );
-}
-
-function addActivity(type, amount, hash) {
-  const items = loadActivity();
-
-  items.unshift({
-    type,
-    amount,
-    hash,
-    time: new Date().toISOString()
-  });
-
-  saveActivity(items);
-  renderActivity();
-}
-
-function formatActivityTime(iso) {
-  return new Date(iso).toLocaleTimeString();
-}
-
-function renderActivity() {
-  const list = $("activity-list");
-
-  if (!list) return;
-
-  const items = loadActivity();
-
-  if (!items.length) {
-    list.innerHTML = `
-      <div class="activity-empty">
-        No staking transactions yet.
-      </div>
-    `;
-
-    return;
+  if (connectBtn) {
+    connectBtn.onclick = async () => {
+      if (userAddress) {
+        disconnectWallet();
+      } else {
+        await connectWallet();
+      }
+    };
   }
 
-  list.innerHTML = items
-    .map(
-      (item) => `
-        <div class="activity-card">
-          <div class="activity-top">
-            <span class="activity-type">${item.type}</span>
-            <span class="activity-time">${formatActivityTime(item.time)}</span>
-          </div>
+  $("refresh-staking")?.addEventListener("click", refreshStakingUi);
+  $("approve-infl")?.addEventListener("click", approveInfl);
+  $("stake-infl")?.addEventListener("click", stakeInfl);
+  $("claim-rewards")?.addEventListener("click", claimRewards);
+  $("withdraw-infl")?.addEventListener("click", withdrawInfl);
+  $("exit-staking")?.addEventListener("click", exitStaking);
+  $("max-stake")?.addEventListener("click", fillMaxStake);
+  $("stake-amount")?.addEventListener("input", updateApprovalStatus);
 
-          <div class="activity-amount">
-            ${item.amount}
-          </div>
+  const slider = $("stake-slider");
 
-          <div class="activity-link">
-            <a href="${getTxLink(item.hash)}" target="_blank" rel="noopener noreferrer">
-              View on Etherscan
-            </a>
-          </div>
-        </div>
-      `
-    )
-    .join("");
-}
-
-/* ---------------- RPC FALLBACK ---------------- */
-
-async function getReadProvider() {
-  if (cachedReadProvider) {
-    return cachedReadProvider;
+  if (slider) {
+    slider.addEventListener("input", updateStakeFromSlider);
   }
 
-  setText("rpc-provider", "Checking...");
+  const eth = getWalletProvider();
 
-  for (const rpc of APP_CONFIG.rpcs) {
-    try {
-      const testProvider =
-        new ethers.JsonRpcProvider(
-          rpc.url
-        );
-
-      await testProvider.getBlockNumber();
-
-      cachedReadProvider = testProvider;
-      cachedReadRpc = rpc;
-
-      setText("rpc-provider", rpc.name);
-
-      if (rpc.url !== APP_CONFIG.rpcs[0].url) {
-        showToast(
-          "RPC fallback active",
-          `Using ${rpc.name}.`,
-          "info"
-        );
+  if (eth) {
+    eth.on?.("accountsChanged", async (accounts) => {
+      if (!accounts.length) {
+        disconnectWallet();
+        return;
       }
 
-      return cachedReadProvider;
-    } catch (error) {
-      console.warn(
-        "RPC failed:",
-        rpc.name,
-        error
-      );
-    }
-  }
-
-  setText("rpc-provider", "All RPCs failed");
-
-  throw new Error("All RPC providers failed.");
-}
-
-function resetReadProvider() {
-  cachedReadProvider = null;
-  cachedReadRpc = null;
-
-  setText("rpc-provider", "Checking...");
-}
-
-async function getReadContracts() {
-  const readProvider =
-    await getReadProvider();
-
-  return {
-    token: new ethers.Contract(
-      APP_CONFIG.contracts.infl,
-      ABI.token,
-      readProvider
-    ),
-
-    vault: new ethers.Contract(
-      APP_CONFIG.contracts.stakingVault,
-      ABI.vault,
-      readProvider
-    )
-  };
-}
-
-async function getWriteContracts() {
-  if (!signer || !userAddress) {
-    await connectWallet();
-  }
-
-  return {
-    token: new ethers.Contract(
-      APP_CONFIG.contracts.infl,
-      ABI.token,
-      signer
-    ),
-
-    vault: new ethers.Contract(
-      APP_CONFIG.contracts.stakingVault,
-      ABI.vault,
-      signer
-    )
-  };
-}
-
-/* ---------------- WALLET ---------------- */
-
-async function ensureSepolia() {
-  const eth = getEthereumProvider();
-
-  if (!eth) {
-    throw new Error("No wallet found");
-  }
-
-  const chainId =
-    await eth.request({
-      method: "eth_chainId"
+      userAddress = accounts[0];
+      setText("wallet-address", userAddress);
+      updateWalletButton();
+      await refreshStakingUi();
     });
 
-  if (chainId === APP_CONFIG.chainIdHex) {
-    return;
+    eth.on?.("chainChanged", async () => {
+      await updateNetworkDisplay();
+      await refreshStakingUi();
+    });
   }
+}
+
+async function connectWallet() {
+  try {
+    const eth = getWalletProvider();
+
+    if (!eth) {
+      throw new Error("No wallet found. Open Rabby or MetaMask.");
+    }
+
+    setStatus("Connecting wallet...");
+
+    const accounts = await eth.request({
+      method: "eth_requestAccounts"
+    });
+
+    if (!accounts || !accounts.length) {
+      throw new Error("No wallet account selected.");
+    }
+
+    await ensureSepolia();
+
+    provider = new ethers.BrowserProvider(eth);
+    signer = await provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    setText("wallet-address", userAddress);
+    setText("wallet-provider", getWalletName());
+
+    await updateNetworkDisplay();
+
+    updateWalletButton();
+    setStatus("Wallet connected.");
+
+    await refreshStakingUi();
+  } catch (error) {
+    console.error(error);
+    setStatus(error.shortMessage || error.message || "Wallet connection failed.");
+  }
+}
+
+function disconnectWallet() {
+  provider = null;
+  signer = null;
+  userAddress = null;
+
+  setText("wallet-address", "Not connected");
+  setText("wallet-provider", "—");
+  setText("wallet-infl-balance", "—");
+  setText("vault-user-staked", "—");
+  setText("vault-earned", "—");
+
+  updateWalletButton();
+  setStatus("Wallet disconnected.");
+}
+
+async function ensureSepolia() {
+  const eth = getWalletProvider();
+
+  if (!eth) {
+    throw new Error("No wallet found.");
+  }
+
+  const chainId = await eth.request({
+    method: "eth_chainId"
+  });
+
+  if (chainId === APP_CONFIG.chainIdHex) return;
 
   try {
     await eth.request({
       method: "wallet_switchEthereumChain",
-      params: [
-        {
-          chainId: APP_CONFIG.chainIdHex
-        }
-      ]
+      params: [{ chainId: APP_CONFIG.chainIdHex }]
     });
-  } catch (switchError) {
-    if (switchError.code === 4902) {
+  } catch (error) {
+    if (error.code === 4902) {
       await eth.request({
         method: "wallet_addEthereumChain",
         params: [
@@ -627,458 +264,164 @@ async function ensureSepolia() {
         ]
       });
     } else {
-      throw switchError;
+      throw error;
     }
   }
-
-  await updateNetworkDisplay();
 }
 
-function bindButtons() {
-  bindWalletButton();
-
-  $("refresh-staking")?.addEventListener(
-    "click",
-    async () => {
-      resetReadProvider();
-      await updateNetworkDisplay();
-      await refreshStakingUi();
-    }
-  );
-
-  $("approve-infl")?.addEventListener("click", approveInfl);
-  $("stake-infl")?.addEventListener("click", stakeInfl);
-  $("claim-rewards")?.addEventListener("click", claimRewards);
-  $("withdraw-infl")?.addEventListener("click", withdrawInfl);
-  $("exit-staking")?.addEventListener("click", exitStaking);
-  $("max-stake")?.addEventListener("click", fillMaxStake);
-  $("stake-slider")?.addEventListener("input", updateStakeFromSlider);
-  $("stake-amount")?.addEventListener("input", updateStakeButtonFromAllowance);
-
-  updateStakeButtonDisabled(true);
-  clearApprovalBox();
-  clearRewardMetrics();
-  updateClaimButtonGlow(0n);
-
-  const eth = getEthereumProvider();
-
-  if (eth) {
-    eth.on?.(
-      "accountsChanged",
-      handleAccountsChanged
-    );
-
-    eth.on?.(
-      "chainChanged",
-      async () => {
-        await updateNetworkDisplay();
-        resetReadProvider();
-        await refreshStakingUi();
-      }
-    );
-  }
-}
-
-function bindWalletButton() {
-  const oldBtn = $("connect-wallet");
-
-  if (!oldBtn) return;
-
-  const newBtn = oldBtn.cloneNode(true);
-
-  oldBtn.parentNode.replaceChild(
-    newBtn,
-    oldBtn
-  );
-
-  newBtn.addEventListener(
-    "click",
-    async () => {
-      if (userAddress) {
-        disconnectWallet();
-      } else {
-        await connectWallet();
-      }
-    }
-  );
-}
-
-async function connectWallet() {
+async function updateNetworkDisplay() {
   try {
-    manuallyDisconnected = false;
-
-    const eth = chooseEthereumProvider();
+    const eth = getWalletProvider();
 
     if (!eth) {
-      throw new Error("No wallet detected. Install or enable Rabby/MetaMask.");
-    }
-
-    updateWalletProviderDisplay();
-
-    setStatus("Connecting wallet...");
-    showToast(
-      "Wallet",
-      "Connecting wallet...",
-      "info"
-    );
-
-    provider =
-      new ethers.BrowserProvider(
-        eth
-      );
-
-    await provider.send(
-      "eth_requestAccounts",
-      []
-    );
-
-    await ensureSepolia();
-
-    provider =
-      new ethers.BrowserProvider(
-        eth
-      );
-
-    signer = await provider.getSigner();
-    userAddress = await signer.getAddress();
-
-    setText("wallet-address", userAddress);
-    setText("wallet-provider", walletType);
-
-    await updateNetworkDisplay();
-
-    updateWalletButton();
-    renderActivity();
-
-    setStatus("Wallet connected.");
-
-    showToast(
-      `${walletType} connected`,
-      shortAddress(userAddress),
-      "success"
-    );
-
-    await refreshStakingUi();
-  } catch (error) {
-    console.error(error);
-
-    const message =
-      error.reason ||
-      error.shortMessage ||
-      error.message ||
-      "Connection failed.";
-
-    setStatus(message);
-
-    showToast(
-      "Connection failed",
-      message,
-      "error"
-    );
-  }
-}
-
-function disconnectWallet() {
-  manuallyDisconnected = true;
-
-  provider = null;
-  signer = null;
-  userAddress = null;
-
-  setText("wallet-address", "Not connected");
-  setText("wallet-provider", "—");
-  setText("wallet-network", "—");
-  setText("wallet-infl-balance", "—");
-  setText("vault-user-staked", "—");
-  setText("vault-earned", "—");
-  setText("last-updated", "—");
-
-  updateNetworkStyles(null);
-  updateStakeButtonDisabled(true);
-  clearApprovalBox();
-  clearRewardMetrics();
-  updateClaimButtonGlow(0n);
-  updateWalletButton();
-  renderActivity();
-
-  setStatus("Wallet disconnected.");
-
-  showToast(
-    "Wallet disconnected",
-    "Frontend session cleared.",
-    "info"
-  );
-}
-
-async function reconnectIfAlreadyConnected() {
-  try {
-    const eth = chooseEthereumProvider();
-
-    if (
-      manuallyDisconnected ||
-      !eth
-    ) {
-      updateWalletButton();
-      updateStakeButtonDisabled(true);
-      clearApprovalBox();
-      clearRewardMetrics();
-      updateClaimButtonGlow(0n);
-      renderActivity();
-
+      setText("wallet-network", "No wallet");
+      setText("wallet-provider", "No wallet");
       return;
     }
 
-    const accounts =
-      await eth.request({
-        method: "eth_accounts"
-      });
-
-    if (!accounts.length) {
-      updateWalletButton();
-      updateStakeButtonDisabled(true);
-      clearApprovalBox();
-      clearRewardMetrics();
-      updateClaimButtonGlow(0n);
-      renderActivity();
-
-      await updateNetworkDisplay();
-
-      return;
-    }
-
-    updateWalletProviderDisplay();
-
-    provider =
-      new ethers.BrowserProvider(
-        eth
-      );
-
-    signer = await provider.getSigner();
-    userAddress = await signer.getAddress();
-
-    setText("wallet-address", userAddress);
-    setText("wallet-provider", walletType);
-
-    await updateNetworkDisplay();
-
-    updateWalletButton();
-    renderActivity();
-
-    setStatus("Wallet connected.");
-  } catch (error) {
-    console.error(error);
-
-    updateWalletButton();
-    updateStakeButtonDisabled(true);
-    clearApprovalBox();
-    clearRewardMetrics();
-    updateClaimButtonGlow(0n);
-    renderActivity();
-  }
-}
-
-async function handleAccountsChanged(accounts) {
-  if (!accounts.length) {
-    disconnectWallet();
-    return;
-  }
-
-  if (manuallyDisconnected) return;
-
-  const eth = getEthereumProvider();
-
-  if (!eth) {
-    disconnectWallet();
-    return;
-  }
-
-  userAddress = accounts[0];
-
-  provider =
-    new ethers.BrowserProvider(
-      eth
-    );
-
-  signer = await provider.getSigner();
-
-  updateWalletProviderDisplay();
-
-  setText("wallet-address", userAddress);
-  setText("wallet-provider", walletType);
-
-  await updateNetworkDisplay();
-
-  updateWalletButton();
-  renderActivity();
-
-  setStatus("Wallet changed.");
-
-  showToast(
-    "Wallet changed",
-    shortAddress(userAddress),
-    "info"
-  );
-
-  await refreshStakingUi();
-}
-
-/* ---------------- UI ---------------- */
-
-function updateStakeButtonDisabled(disabled) {
-  const stakeButton = $("stake-infl");
-
-  if (stakeButton) {
-    stakeButton.disabled = disabled;
-  }
-}
-
-async function updateStakeButtonFromAllowance() {
-  try {
-    if (!userAddress) {
-      updateStakeButtonDisabled(true);
-      clearApprovalBox();
-      return;
-    }
-
-    const value = $("stake-amount")?.value;
-
-    const { token } =
-      await getReadContracts();
-
-    const allowance =
-      await token.allowance(
-        userAddress,
-        APP_CONFIG.contracts.stakingVault
-      );
+    const chainId = await eth.request({
+      method: "eth_chainId"
+    });
 
     setText(
-      "approved-amount",
-      formatInfl(allowance)
+      "wallet-network",
+      NETWORK_NAMES[chainId] || `Unknown Network (${chainId})`
     );
 
-    if (!value || Number(value) <= 0) {
-      updateStakeButtonDisabled(true);
-
-      setText(
-        "approval-status-text",
-        allowance > 0n
-          ? "Enter amount to stake"
-          : "Approval required"
-      );
-
-      return;
-    }
-
-    const amount =
-      ethers.parseUnits(value, 18);
-
-    const hasEnoughAllowance =
-      allowance >= amount;
-
-    updateStakeButtonDisabled(
-      !hasEnoughAllowance
-    );
-
-    setText(
-      "approval-status-text",
-      hasEnoughAllowance
-        ? "Ready to stake"
-        : "Approval required"
-    );
-
-    setStatus(
-      hasEnoughAllowance
-        ? "Approved amount available. Ready to stake."
-        : "Approve INFL before staking."
-    );
+    setText("wallet-provider", getWalletName());
   } catch (error) {
     console.error(error);
-
-    resetReadProvider();
-    updateStakeButtonDisabled(true);
-
-    setText(
-      "approval-status-text",
-      "Approval check failed"
-    );
+    setText("wallet-network", "Unknown");
   }
+}
+
+function getReadProvider() {
+  if (!readProvider) {
+    readProvider = new ethers.JsonRpcProvider(APP_CONFIG.rpcs[0].url);
+  }
+
+  return readProvider;
+}
+
+function getReadContracts() {
+  const rpc = getReadProvider();
+
+  return {
+    token: new ethers.Contract(APP_CONFIG.contracts.infl, ABI.token, rpc),
+    vault: new ethers.Contract(APP_CONFIG.contracts.stakingVault, ABI.vault, rpc)
+  };
+}
+
+async function getWriteContracts() {
+  if (!signer) {
+    await connectWallet();
+  }
+
+  return {
+    token: new ethers.Contract(APP_CONFIG.contracts.infl, ABI.token, signer),
+    vault: new ethers.Contract(APP_CONFIG.contracts.stakingVault, ABI.vault, signer)
+  };
+}
+
+function formatInfl(raw) {
+  const value = Number(ethers.formatUnits(raw, 18));
+
+  return `${value.toLocaleString(undefined, {
+    maximumFractionDigits: 6
+  })} INFL`;
+}
+
+function parseAmount(inputId) {
+  const value = $(inputId)?.value;
+
+  if (!value || Number(value) <= 0) {
+    throw new Error("Enter an amount greater than 0.");
+  }
+
+  return ethers.parseUnits(value, 18);
 }
 
 async function refreshStakingUi() {
   try {
-    if (!$("vault-total-staked")) return;
+    if (typeof ethers === "undefined") {
+      setStatus("Ethers is not loaded. Check staking.html script tags.");
+      return;
+    }
 
-    const { token, vault } =
-      await getReadContracts();
+    const { token, vault } = getReadContracts();
 
-    const totalStaked =
-      await vault.totalStaked();
+    const totalStaked = await vault.totalStaked();
 
-    setText(
-      "vault-total-staked",
-      formatInfl(totalStaked)
-    );
+    setText("vault-total-staked", formatInfl(totalStaked));
 
     if (!userAddress) {
       setText("wallet-address", "Not connected");
       setText("wallet-infl-balance", "—");
       setText("vault-user-staked", "—");
       setText("vault-earned", "—");
-
-      await updateNetworkDisplay();
-
-      updateWalletButton();
-      updateStakeButtonDisabled(true);
-      clearApprovalBox();
-      clearRewardMetrics();
-      updateClaimButtonGlow(0n);
-
       return;
     }
 
-    const [
-      walletBalance,
-      userStaked,
-      earned
-    ] = await Promise.all([
+    const [walletBalance, userStaked, earned] = await Promise.all([
       token.balanceOf(userAddress),
       vault.balanceOf(userAddress),
       vault.earned(userAddress)
     ]);
 
-    setText(
-      "wallet-infl-balance",
-      formatInfl(walletBalance)
-    );
+    setText("wallet-infl-balance", formatInfl(walletBalance));
+    setText("vault-user-staked", formatInfl(userStaked));
+    setText("vault-earned", formatInfl(earned));
+    setText("last-updated", new Date().toLocaleTimeString());
 
-    setText(
-      "vault-user-staked",
-      formatInfl(userStaked)
-    );
-
-    setText(
-      "vault-earned",
-      formatInfl(earned)
-    );
-
-    updateClaimButtonGlow(earned);
-    updateRewardMetrics(userStaked, earned);
-    updateLastUpdated();
-
-    await updateNetworkDisplay();
-    await updateStakeButtonFromAllowance();
+    await updateApprovalStatus();
   } catch (error) {
     console.error(error);
-
-    resetReadProvider();
-
-    setStatus(
-      "Could not refresh staking data."
-    );
+    setStatus("Could not refresh staking data.");
   }
 }
 
-/* ---------------- TRANSACTIONS ---------------- */
+async function updateApprovalStatus() {
+  try {
+    const stakeButton = $("stake-infl");
+
+    if (!userAddress) {
+      if (stakeButton) stakeButton.disabled = true;
+      setText("approved-amount", "0 INFL");
+      setText("approval-status-text", "Connect wallet first");
+      return;
+    }
+
+    const amountText = $("stake-amount")?.value;
+
+    const { token } = getReadContracts();
+
+    const allowance = await token.allowance(
+      userAddress,
+      APP_CONFIG.contracts.stakingVault
+    );
+
+    setText("approved-amount", formatInfl(allowance));
+
+    if (!amountText || Number(amountText) <= 0) {
+      if (stakeButton) stakeButton.disabled = true;
+      setText("approval-status-text", "Enter amount");
+      return;
+    }
+
+    const amount = ethers.parseUnits(amountText, 18);
+
+    if (allowance >= amount) {
+      if (stakeButton) stakeButton.disabled = false;
+      setText("approval-status-text", "Ready to stake");
+    } else {
+      if (stakeButton) stakeButton.disabled = true;
+      setText("approval-status-text", "Approval required");
+    }
+  } catch (error) {
+    console.error(error);
+    setText("approval-status-text", "Approval check failed");
+  }
+}
 
 async function fillMaxStake() {
   try {
@@ -1086,541 +429,165 @@ async function fillMaxStake() {
       await connectWallet();
     }
 
-    const { token } =
-      await getReadContracts();
+    const { token } = getReadContracts();
+    const balance = await token.balanceOf(userAddress);
 
-    const balance =
-      await token.balanceOf(userAddress);
+    const value = Number(ethers.formatUnits(balance, 18));
 
-    const formatted =
-      Number(
-        ethers.formatUnits(balance, 18)
-      );
-
-    setInputValue(
-      "stake-amount",
-      formatted.toFixed(6)
-    );
-
-    $("stake-slider").value = 100;
+    const input = $("stake-amount");
+    if (input) input.value = value.toFixed(6);
 
     setText("slider-percent", "100%");
 
-    setStatus("Max stake amount filled.");
+    const slider = $("stake-slider");
+    if (slider) slider.value = 100;
 
-    showToast(
-      "Max selected",
-      "100% of wallet balance filled.",
-      "info"
-    );
-
-    await updateStakeButtonFromAllowance();
+    await updateApprovalStatus();
   } catch (error) {
     console.error(error);
-
-    resetReadProvider();
-
-    setStatus(
-      "Could not fetch max balance."
-    );
-
-    showToast(
-      "Max failed",
-      "Could not fetch wallet balance.",
-      "error"
-    );
+    setStatus("Could not fill max stake.");
   }
 }
 
 async function updateStakeFromSlider(event) {
   try {
     if (!userAddress) {
-      updateStakeButtonDisabled(true);
-      clearApprovalBox();
+      setStatus("Connect wallet first.");
       return;
     }
 
-    const percent =
-      Number(event.target.value);
+    const percent = Number(event.target.value);
+    setText("slider-percent", `${percent}%`);
 
-    setText(
-      "slider-percent",
-      `${percent}%`
-    );
+    const { token } = getReadContracts();
+    const balance = await token.balanceOf(userAddress);
 
-    const { token } =
-      await getReadContracts();
+    const balanceValue = Number(ethers.formatUnits(balance, 18));
+    const stakeValue = (balanceValue * percent) / 100;
 
-    const balance =
-      await token.balanceOf(userAddress);
+    const input = $("stake-amount");
+    if (input) input.value = stakeValue.toFixed(6);
 
-    const balanceFloat =
-      Number(
-        ethers.formatUnits(balance, 18)
-      );
-
-    const amount =
-      (balanceFloat * percent) / 100;
-
-    setInputValue(
-      "stake-amount",
-      amount.toFixed(6)
-    );
-
-    await updateStakeButtonFromAllowance();
+    await updateApprovalStatus();
   } catch (error) {
     console.error(error);
-    resetReadProvider();
   }
 }
 
 async function approveInfl() {
-  const resetButton =
-    setButtonLoading(
-      "approve-infl",
-      "Approving..."
-    );
-
-  let amount = 0n;
-
   try {
-    amount = parseAmount("stake-amount");
+    const amount = parseAmount("stake-amount");
+    const { token } = await getWriteContracts();
 
-    const { token } =
-      await getWriteContracts();
+    setStatus("Confirm approval in wallet...");
 
-    setStatus(
-      "Waiting for wallet confirmation."
+    const tx = await token.approve(
+      APP_CONFIG.contracts.stakingVault,
+      amount
     );
 
-    showToast(
-      "Confirm approval",
-      "Approve the transaction in your wallet.",
-      "info"
-    );
-
-    const tx =
-      await token.approve(
-        APP_CONFIG.contracts.stakingVault,
-        amount
-      );
-
-    setStatus(
-      "Waiting for blockchain confirmation."
-    );
-
-    showToast(
-      "Approval submitted",
-      "Waiting for blockchain confirmation.",
-      "info"
-    );
+    setStatus("Waiting for approval confirmation...");
 
     await tx.wait();
 
     setStatus("Approval confirmed.");
-
-    showToast(
-      "Approval confirmed",
-      `INFL approval was successful. ${getTxLink(tx.hash)}`,
-      "success"
-    );
-
-    addActivity(
-      "Approve",
-      formatAmountText(amount),
-      tx.hash
-    );
-
-    window.open(
-      getTxLink(tx.hash),
-      "_blank"
-    );
-
     await refreshStakingUi();
   } catch (error) {
     console.error(error);
-
-    const message =
-      error.reason ||
-      error.shortMessage ||
-      error.message ||
-      "Approval failed.";
-
-    setStatus(message);
-
-    showToast(
-      "Approval failed",
-      message,
-      "error"
-    );
-  } finally {
-    if (resetButton) resetButton();
-
-    await updateStakeButtonFromAllowance();
+    setStatus(error.shortMessage || error.message || "Approval failed.");
   }
 }
 
 async function stakeInfl() {
-  const resetButton =
-    setButtonLoading(
-      "stake-infl",
-      "Staking..."
-    );
-
-  let amount = 0n;
-
   try {
-    await updateStakeButtonFromAllowance();
+    const amount = parseAmount("stake-amount");
+    const { vault } = await getWriteContracts();
 
-    const stakeButton = $("stake-infl");
+    setStatus("Confirm stake in wallet...");
 
-    if (stakeButton?.disabled) {
-      throw new Error(
-        "Approve INFL before staking."
-      );
-    }
+    const tx = await vault.stake(amount);
 
-    amount = parseAmount("stake-amount");
-
-    const { vault } =
-      await getWriteContracts();
-
-    setStatus(
-      "Waiting for wallet confirmation."
-    );
-
-    showToast(
-      "Confirm stake",
-      "Approve the staking transaction in your wallet.",
-      "info"
-    );
-
-    const tx =
-      await vault.stake(amount);
-
-    setStatus(
-      "Waiting for blockchain confirmation."
-    );
-
-    showToast(
-      "Stake submitted",
-      "Waiting for blockchain confirmation.",
-      "info"
-    );
+    setStatus("Waiting for stake confirmation...");
 
     await tx.wait();
 
     setStatus("Stake confirmed.");
-
-    showToast(
-      "Stake confirmed",
-      `INFL successfully staked. ${getTxLink(tx.hash)}`,
-      "success"
-    );
-
-    addActivity(
-      "Stake",
-      formatAmountText(amount),
-      tx.hash
-    );
-
-    window.open(
-      getTxLink(tx.hash),
-      "_blank"
-    );
-
     await refreshStakingUi();
   } catch (error) {
     console.error(error);
-
-    const message =
-      error.reason ||
-      error.shortMessage ||
-      error.message ||
-      "Stake failed.";
-
-    setStatus(message);
-
-    showToast(
-      "Stake failed",
-      message,
-      "error"
-    );
-  } finally {
-    if (resetButton) resetButton();
-
-    await updateStakeButtonFromAllowance();
+    setStatus(error.shortMessage || error.message || "Stake failed.");
   }
 }
 
 async function claimRewards() {
-  const resetButton =
-    setButtonLoading(
-      "claim-rewards",
-      "Claiming..."
-    );
-
-  let earnedBeforeClaim = 0n;
-
   try {
-    const { vault } =
-      await getWriteContracts();
+    const { vault } = await getWriteContracts();
 
-    if (userAddress) {
-      earnedBeforeClaim =
-        await vault.earned(userAddress);
-    }
+    setStatus("Confirm claim in wallet...");
 
-    setStatus(
-      "Waiting for wallet confirmation."
-    );
+    const tx = await vault.claimRewards();
 
-    showToast(
-      "Confirm claim",
-      "Approve the claim transaction in your wallet.",
-      "info"
-    );
-
-    const tx =
-      await vault.claimRewards();
-
-    setStatus(
-      "Waiting for blockchain confirmation."
-    );
-
-    showToast(
-      "Claim submitted",
-      "Waiting for blockchain confirmation.",
-      "info"
-    );
+    setStatus("Waiting for claim confirmation...");
 
     await tx.wait();
 
     setStatus("Rewards claimed.");
-
-    showToast(
-      "Rewards claimed",
-      `Your staking rewards were claimed. ${getTxLink(tx.hash)}`,
-      "success"
-    );
-
-    addActivity(
-      "Claim Rewards",
-      formatAmountText(earnedBeforeClaim),
-      tx.hash
-    );
-
-    window.open(
-      getTxLink(tx.hash),
-      "_blank"
-    );
-
     await refreshStakingUi();
   } catch (error) {
     console.error(error);
-
-    const message =
-      error.reason ||
-      error.shortMessage ||
-      error.message ||
-      "Claim failed.";
-
-    setStatus(message);
-
-    showToast(
-      "Claim failed",
-      message,
-      "error"
-    );
-  } finally {
-    if (resetButton) resetButton();
+    setStatus(error.shortMessage || error.message || "Claim failed.");
   }
 }
 
 async function withdrawInfl() {
-  const resetButton =
-    setButtonLoading(
-      "withdraw-infl",
-      "Withdrawing..."
-    );
-
-  let amount = 0n;
-
   try {
-    amount =
-      parseAmount("withdraw-amount");
+    const amount = parseAmount("withdraw-amount");
+    const { vault } = await getWriteContracts();
 
-    const { vault } =
-      await getWriteContracts();
+    setStatus("Confirm withdrawal in wallet...");
 
-    setStatus(
-      "Waiting for wallet confirmation."
-    );
+    const tx = await vault.withdraw(amount);
 
-    showToast(
-      "Confirm withdrawal",
-      "Approve the withdrawal in your wallet.",
-      "info"
-    );
-
-    const tx =
-      await vault.withdraw(amount);
-
-    setStatus(
-      "Waiting for blockchain confirmation."
-    );
-
-    showToast(
-      "Withdrawal submitted",
-      "Waiting for blockchain confirmation.",
-      "info"
-    );
+    setStatus("Waiting for withdrawal confirmation...");
 
     await tx.wait();
 
-    setStatus("Withdraw confirmed.");
-
-    showToast(
-      "Withdraw confirmed",
-      `INFL withdrawn successfully. ${getTxLink(tx.hash)}`,
-      "success"
-    );
-
-    addActivity(
-      "Withdraw",
-      formatAmountText(amount),
-      tx.hash
-    );
-
-    window.open(
-      getTxLink(tx.hash),
-      "_blank"
-    );
-
+    setStatus("Withdrawal confirmed.");
     await refreshStakingUi();
   } catch (error) {
     console.error(error);
-
-    const message =
-      error.reason ||
-      error.shortMessage ||
-      error.message ||
-      "Withdraw failed.";
-
-    setStatus(message);
-
-    showToast(
-      "Withdraw failed",
-      message,
-      "error"
-    );
-  } finally {
-    if (resetButton) resetButton();
+    setStatus(error.shortMessage || error.message || "Withdrawal failed.");
   }
 }
 
 async function exitStaking() {
-  const confirmed =
-    window.confirm(
-      "Are you sure you want to exit all staking?\n\nThis will withdraw your full staked balance and claim available rewards."
-    );
+  const confirmed = window.confirm(
+    "Exit all staking? This withdraws your stake and claims rewards."
+  );
 
   if (!confirmed) {
     setStatus("Exit cancelled.");
-
-    showToast(
-      "Exit cancelled",
-      "No transaction was sent.",
-      "info"
-    );
-
     return;
   }
 
-  const resetButton =
-    setButtonLoading(
-      "exit-staking",
-      "Exiting..."
-    );
-
-  let stakedBeforeExit = 0n;
-
   try {
-    const { vault } =
-      await getWriteContracts();
+    const { vault } = await getWriteContracts();
 
-    if (userAddress) {
-      stakedBeforeExit =
-        await vault.balanceOf(userAddress);
-    }
+    setStatus("Confirm exit in wallet...");
 
-    setStatus(
-      "Waiting for wallet confirmation."
-    );
+    const tx = await vault.exit();
 
-    showToast(
-      "Confirm exit",
-      "Approve exit all in your wallet.",
-      "info"
-    );
-
-    const tx =
-      await vault.exit();
-
-    setStatus(
-      "Waiting for blockchain confirmation."
-    );
-
-    showToast(
-      "Exit submitted",
-      "Waiting for blockchain confirmation.",
-      "info"
-    );
+    setStatus("Waiting for exit confirmation...");
 
     await tx.wait();
 
     setStatus("Exit confirmed.");
-
-    showToast(
-      "Exit confirmed",
-      `You exited staking successfully. ${getTxLink(tx.hash)}`,
-      "success"
-    );
-
-    addActivity(
-      "Exit All",
-      formatAmountText(stakedBeforeExit),
-      tx.hash
-    );
-
-    window.open(
-      getTxLink(tx.hash),
-      "_blank"
-    );
-
     await refreshStakingUi();
   } catch (error) {
     console.error(error);
-
-    const message =
-      error.reason ||
-      error.shortMessage ||
-      error.message ||
-      "Exit failed.";
-
-    setStatus(message);
-
-    showToast(
-      "Exit failed",
-      message,
-      "error"
-    );
-  } finally {
-    if (resetButton) resetButton();
+    setStatus(error.shortMessage || error.message || "Exit failed.");
   }
 }
-
-/* ---------------- STARFIELD ---------------- */
 
 function initStarfield() {
   const canvas = $("starfield");
@@ -1637,62 +604,29 @@ function initStarfield() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    stars =
-      Array.from(
-        { length: 120 },
-        () => ({
-          x:
-            Math.random() *
-            canvas.width,
-
-          y:
-            Math.random() *
-            canvas.height,
-
-          r:
-            Math.random() * 1.5 + 0.2,
-
-          s:
-            Math.random() * 0.25 + 0.05,
-
-          o:
-            Math.random() * 0.6 + 0.25
-        })
-      );
+    stars = Array.from({ length: 120 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.2,
+      s: Math.random() * 0.25 + 0.05,
+      o: Math.random() * 0.6 + 0.25
+    }));
   }
 
   function draw() {
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (const star of stars) {
       ctx.beginPath();
-
-      ctx.arc(
-        star.x,
-        star.y,
-        star.r,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fillStyle =
-        `rgba(255,255,255,${star.o})`;
-
+      ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${star.o})`;
       ctx.fill();
 
       star.y -= star.s;
 
       if (star.y < 0) {
         star.y = canvas.height;
-
-        star.x =
-          Math.random() *
-          canvas.width;
+        star.x = Math.random() * canvas.width;
       }
     }
 
@@ -1700,11 +634,6 @@ function initStarfield() {
   }
 
   resize();
-
-  window.addEventListener(
-    "resize",
-    resize
-  );
-
+  window.addEventListener("resize", resize);
   draw();
 }
