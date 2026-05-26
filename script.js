@@ -60,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
   bindButtons();
   updateEnvironmentBadge();
   updateWalletButton();
-  updateRewardMetricsDisplay();
 
   setText("rpc-provider", "Checking...");
 
@@ -128,12 +127,60 @@ function updateEnvironmentBadge() {
   badge.classList.add("testnet-mode");
 }
 
-function updateRewardMetricsDisplay() {
-  setText("estimated-apr", "8.50%");
-  setText("daily-reward-estimate", "0.026 INFL");
-  setText("monthly-reward-estimate", "0.79 INFL");
-  setText("vault-share", "2.31%");
-  setText("reward-status-text", "Accumulating");
+function updateRewardMetricsDisplay(userStakeRaw, totalStakeRaw) {
+
+  const apr = 8.5;
+
+  const userStake =
+    Number(
+      ethers.formatUnits(userStakeRaw || 0, 18)
+    );
+
+  const totalStake =
+    Number(
+      ethers.formatUnits(totalStakeRaw || 1, 18)
+    );
+
+  const yearlyRewards =
+    userStake * (apr / 100);
+
+  const dailyRewards =
+    yearlyRewards / 365;
+
+  const monthlyRewards =
+    yearlyRewards / 12;
+
+  const vaultShare =
+    totalStake > 0
+      ? (userStake / totalStake) * 100
+      : 0;
+
+  setText(
+    "estimated-apr",
+    `${apr.toFixed(2)}%`
+  );
+
+  setText(
+    "daily-reward-estimate",
+    `${dailyRewards.toFixed(3)} INFL`
+  );
+
+  setText(
+    "monthly-reward-estimate",
+    `${monthlyRewards.toFixed(2)} INFL`
+  );
+
+  setText(
+    "vault-share",
+    `${vaultShare.toFixed(2)}%`
+  );
+
+  setText(
+    "reward-status-text",
+    userStake > 0
+      ? "Accumulating"
+      : "Waiting for stake"
+  );
 }
 
 function bindButtons() {
@@ -250,7 +297,7 @@ function disconnectWallet() {
   setText("approval-status-text", "Connect wallet first");
 
   updateWalletButton();
-  updateRewardMetricsDisplay();
+  updateRewardMetricsDisplay(0, 1);
 
   setStatus("Wallet disconnected.");
 }
@@ -401,7 +448,6 @@ async function refreshStakingUi() {
     const totalStaked = await vault.totalStaked();
 
     setText("vault-total-staked", formatInfl(totalStaked));
-    updateRewardMetricsDisplay();
 
     if (!userAddress) {
       setText("wallet-address", "Not connected");
@@ -410,6 +456,9 @@ async function refreshStakingUi() {
       setText("vault-earned", "—");
       setText("approved-amount", "0 INFL");
       setText("approval-status-text", "Connect wallet first");
+
+      updateRewardMetricsDisplay(0, totalStaked);
+
       return;
     }
 
@@ -424,9 +473,13 @@ async function refreshStakingUi() {
     setText("vault-earned", formatInfl(earned));
     setText("last-updated", new Date().toLocaleTimeString());
 
-    updateRewardMetricsDisplay();
+    updateRewardMetricsDisplay(
+      userStaked,
+      totalStaked
+    );
 
     await updateApprovalStatus();
+
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Could not refresh staking data.");
@@ -470,6 +523,7 @@ async function updateApprovalStatus() {
       if (stakeButton) stakeButton.disabled = true;
       setText("approval-status-text", "Approval required");
     }
+
   } catch (error) {
     console.error(error);
     setText("approval-status-text", "Approval check failed");
@@ -496,6 +550,7 @@ async function fillMaxStake() {
     if (slider) slider.value = 100;
 
     await updateApprovalStatus();
+
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Could not fill max stake.");
@@ -510,18 +565,27 @@ async function updateStakeFromSlider(event) {
     }
 
     const percent = Number(event.target.value);
+
     setText("slider-percent", `${percent}%`);
 
     const { token } = await getReadContracts();
     const balance = await token.balanceOf(userAddress);
 
-    const balanceValue = Number(ethers.formatUnits(balance, 18));
-    const stakeValue = (balanceValue * percent) / 100;
+    const balanceValue = Number(
+      ethers.formatUnits(balance, 18)
+    );
+
+    const stakeValue =
+      (balanceValue * percent) / 100;
 
     const input = $("stake-amount");
-    if (input) input.value = stakeValue.toFixed(6);
+
+    if (input) {
+      input.value = stakeValue.toFixed(6);
+    }
 
     await updateApprovalStatus();
+
   } catch (error) {
     console.error(error);
   }
@@ -544,7 +608,9 @@ async function approveInfl() {
     await tx.wait();
 
     setStatus("Approval confirmed.");
+
     await refreshStakingUi();
+
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Approval failed.");
@@ -565,7 +631,9 @@ async function stakeInfl() {
     await tx.wait();
 
     setStatus("Stake confirmed.");
+
     await refreshStakingUi();
+
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Stake failed.");
@@ -585,7 +653,9 @@ async function claimRewards() {
     await tx.wait();
 
     setStatus("Rewards claimed.");
+
     await refreshStakingUi();
+
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Claim failed.");
@@ -606,7 +676,9 @@ async function withdrawInfl() {
     await tx.wait();
 
     setStatus("Withdrawal confirmed.");
+
     await refreshStakingUi();
+
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Withdrawal failed.");
@@ -614,6 +686,7 @@ async function withdrawInfl() {
 }
 
 async function exitStaking() {
+
   const confirmed = window.confirm(
     "Exit all staking? This withdraws your stake and claims rewards."
   );
@@ -635,7 +708,9 @@ async function exitStaking() {
     await tx.wait();
 
     setStatus("Exit confirmed.");
+
     await refreshStakingUi();
+
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Exit failed.");
@@ -643,6 +718,7 @@ async function exitStaking() {
 }
 
 function initStarfield() {
+
   const canvas = $("starfield");
 
   if (!canvas) return;
@@ -654,6 +730,7 @@ function initStarfield() {
   let stars = [];
 
   function resize() {
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -667,12 +744,29 @@ function initStarfield() {
   }
 
   function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
 
     for (const star of stars) {
+
       ctx.beginPath();
-      ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${star.o})`;
+
+      ctx.arc(
+        star.x,
+        star.y,
+        star.r,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.fillStyle =
+        `rgba(255,255,255,${star.o})`;
+
       ctx.fill();
 
       star.y -= star.s;
@@ -687,6 +781,11 @@ function initStarfield() {
   }
 
   resize();
-  window.addEventListener("resize", resize);
+
+  window.addEventListener(
+    "resize",
+    resize
+  );
+
   draw();
 }
