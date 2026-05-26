@@ -129,9 +129,9 @@ function updateEnvironmentBadge() {
 }
 
 function updateRewardMetricsDisplay() {
-  setText("estimated-apr", "12.42%");
-  setText("daily-reward-estimate", "4.28 INFL");
-  setText("monthly-reward-estimate", "128.4 INFL");
+  setText("estimated-apr", "8.50%");
+  setText("daily-reward-estimate", "0.026 INFL");
+  setText("monthly-reward-estimate", "0.79 INFL");
   setText("vault-share", "2.31%");
   setText("reward-status-text", "Accumulating");
 }
