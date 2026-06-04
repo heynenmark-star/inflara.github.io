@@ -2,6 +2,8 @@ const APP_CONFIG = {
   chainIdHex: "0xaa36a7",
   chainName: "Ethereum Sepolia",
 
+  expectedWallet: "0x25bEE48761A8dDA1a05516cf85539f048eA5e969",
+
   rpcs: [
     {
       name: "Primary Alchemy",
@@ -17,10 +19,10 @@ const APP_CONFIG = {
     }
   ],
 
- contracts: {
-  infl: "0x760DBA2C6657838F67cC98114F03c82238B3DC68",
-  stakingVault: "0x462DD81aF25f5408A63899c75Bd15337B840675B"
-}
+  contracts: {
+    infl: "0x760DBA2C6657838F67cC98114F03c82238B3DC68",
+    stakingVault: "0x462DD81aF25f5408A63899c75Bd15337B840675B"
+  }
 };
 
 const ABI = {
@@ -62,6 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateWalletButton();
 
   setText("rpc-provider", "Checking...");
+  setStatus("Phase 1.1 APR-capped staking loaded.");
 
   updateNetworkDisplay();
   refreshStakingUi();
@@ -83,7 +86,12 @@ function setStatus(message) {
 }
 
 function shortAddress(address) {
+  if (!address) return "—";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function sameAddress(a, b) {
+  return String(a || "").toLowerCase() === String(b || "").toLowerCase();
 }
 
 function getWalletProvider() {
@@ -122,79 +130,45 @@ function updateEnvironmentBadge() {
   const badge = $("environment-badge");
   if (!badge) return;
 
-  badge.textContent = "TESTNET MODE";
+  badge.textContent = "TESTNET MODE - PHASE 1.1";
   badge.classList.remove("mainnet-mode");
   badge.classList.add("testnet-mode");
 }
 
 function updateRewardMetricsDisplay(userStakeRaw, totalStakeRaw) {
-
   const apr = 8.5;
 
-  const userStake =
-    Number(
-      ethers.formatUnits(userStakeRaw || 0, 18)
-    );
+  const userStake = Number(ethers.formatUnits(userStakeRaw || 0, 18));
+  const totalStake = Number(ethers.formatUnits(totalStakeRaw || 0, 18));
 
-  const totalStake =
-    Number(
-      ethers.formatUnits(totalStakeRaw || 1, 18)
-    );
-
-  const yearlyRewards =
-    userStake * (apr / 100);
-
-  const dailyRewards =
-    yearlyRewards / 365;
-
-  const monthlyRewards =
-    yearlyRewards / 12;
+  const yearlyRewards = userStake * (apr / 100);
+  const dailyRewards = yearlyRewards / 365;
+  const monthlyRewards = yearlyRewards / 12;
 
   const vaultShare =
     totalStake > 0
       ? (userStake / totalStake) * 100
       : 0;
 
-  setText(
-    "estimated-apr",
-    `${apr.toFixed(2)}%`
-  );
-
-  setText(
-    "daily-reward-estimate",
-    `${dailyRewards.toFixed(3)} INFL`
-  );
-
-  setText(
-    "monthly-reward-estimate",
-    `${monthlyRewards.toFixed(2)} INFL`
-  );
-
-  setText(
-    "vault-share",
-    `${vaultShare.toFixed(2)}%`
-  );
+  setText("estimated-apr", `${apr.toFixed(2)}%`);
+  setText("daily-reward-estimate", `${dailyRewards.toFixed(3)} INFL`);
+  setText("monthly-reward-estimate", `${monthlyRewards.toFixed(2)} INFL`);
+  setText("vault-share", `${vaultShare.toFixed(2)}%`);
 
   setText(
     "reward-status-text",
-    userStake > 0
-      ? "Accumulating"
-      : "Waiting for stake"
+    userStake > 0 ? "Accumulating" : "Waiting for stake"
   );
 }
 
 function bindButtons() {
-  const connectBtn = $("connect-wallet");
-
-  if (connectBtn) {
-    connectBtn.onclick = async () => {
-      if (userAddress) {
-        disconnectWallet();
-      } else {
-        await connectWallet();
-      }
-    };
-  }
+  $("connect-wallet")?.addEventListener("click", async () => {
+    if (userAddress) {
+      disconnectWallet();
+    } else {
+      await connectWallet();
+    }
+  });
 
   $("refresh-staking")?.addEventListener("click", async () => {
     readProvider = null;
@@ -222,21 +196,32 @@ function bindButtons() {
       }
 
       userAddress = accounts[0];
-
       provider = new ethers.BrowserProvider(eth);
       signer = await provider.getSigner();
 
       setText("wallet-address", userAddress);
       setText("wallet-provider", getWalletName());
 
+      checkExpectedWallet();
       updateWalletButton();
       await refreshStakingUi();
     });
 
     eth.on?.("chainChanged", async () => {
+      readProvider = null;
       await updateNetworkDisplay();
       await refreshStakingUi();
     });
+  }
+}
+
+function checkExpectedWallet() {
+  if (!userAddress) return;
+
+  if (!sameAddress(userAddress, APP_CONFIG.expectedWallet)) {
+    setStatus(
+      `Connected wallet ${shortAddress(userAddress)} is not the expected Rabby staking wallet ${shortAddress(APP_CONFIG.expectedWallet)}.`
+    );
   }
 }
 
@@ -274,7 +259,12 @@ async function connectWallet() {
     await updateNetworkDisplay();
 
     updateWalletButton();
-    setStatus("Wallet connected.");
+
+    if (sameAddress(userAddress, APP_CONFIG.expectedWallet)) {
+      setStatus("Expected Rabby staking wallet connected.");
+    } else {
+      checkExpectedWallet();
+    }
 
     await refreshStakingUi();
   } catch (error) {
@@ -293,11 +283,13 @@ function disconnectWallet() {
   setText("wallet-infl-balance", "—");
   setText("vault-user-staked", "—");
   setText("vault-earned", "—");
+  setText("vault-total-staked", "—");
   setText("approved-amount", "0 INFL");
   setText("approval-status-text", "Connect wallet first");
+  setText("last-updated", "—");
 
   updateWalletButton();
-  updateRewardMetricsDisplay(0, 1);
+  updateRewardMetricsDisplay(0, 0);
 
   setStatus("Wallet disconnected.");
 }
@@ -371,16 +363,13 @@ async function updateNetworkDisplay() {
 }
 
 async function getReadProvider() {
-  if (readProvider) {
-    return readProvider;
-  }
+  if (readProvider) return readProvider;
 
   setText("rpc-provider", "Checking...");
 
   for (const rpc of APP_CONFIG.rpcs) {
     try {
       const testProvider = new ethers.JsonRpcProvider(rpc.url);
-
       await testProvider.getBlockNumber();
 
       readProvider = testProvider;
@@ -412,6 +401,10 @@ async function getWriteContracts() {
     await connectWallet();
   }
 
+  if (!signer) {
+    throw new Error("Wallet not connected.");
+  }
+
   return {
     token: new ethers.Contract(APP_CONFIG.contracts.infl, ABI.token, signer),
     vault: new ethers.Contract(APP_CONFIG.contracts.stakingVault, ABI.vault, signer)
@@ -419,7 +412,7 @@ async function getWriteContracts() {
 }
 
 function formatInfl(raw) {
-  const value = Number(ethers.formatUnits(raw, 18));
+  const value = Number(ethers.formatUnits(raw || 0, 18));
 
   return `${value.toLocaleString(undefined, {
     maximumFractionDigits: 6
@@ -446,7 +439,6 @@ async function refreshStakingUi() {
     const { token, vault } = await getReadContracts();
 
     const totalStaked = await vault.totalStaked();
-
     setText("vault-total-staked", formatInfl(totalStaked));
 
     if (!userAddress) {
@@ -458,7 +450,6 @@ async function refreshStakingUi() {
       setText("approval-status-text", "Connect wallet first");
 
       updateRewardMetricsDisplay(0, totalStaked);
-
       return;
     }
 
@@ -473,13 +464,9 @@ async function refreshStakingUi() {
     setText("vault-earned", formatInfl(earned));
     setText("last-updated", new Date().toLocaleTimeString());
 
-    updateRewardMetricsDisplay(
-      userStaked,
-      totalStaked
-    );
+    updateRewardMetricsDisplay(userStaked, totalStaked);
 
     await updateApprovalStatus();
-
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Could not refresh staking data.");
@@ -523,7 +510,6 @@ async function updateApprovalStatus() {
       if (stakeButton) stakeButton.disabled = true;
       setText("approval-status-text", "Approval required");
     }
-
   } catch (error) {
     console.error(error);
     setText("approval-status-text", "Approval check failed");
@@ -550,7 +536,6 @@ async function fillMaxStake() {
     if (slider) slider.value = 100;
 
     await updateApprovalStatus();
-
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Could not fill max stake.");
@@ -565,27 +550,18 @@ async function updateStakeFromSlider(event) {
     }
 
     const percent = Number(event.target.value);
-
     setText("slider-percent", `${percent}%`);
 
     const { token } = await getReadContracts();
     const balance = await token.balanceOf(userAddress);
 
-    const balanceValue = Number(
-      ethers.formatUnits(balance, 18)
-    );
-
-    const stakeValue =
-      (balanceValue * percent) / 100;
+    const balanceValue = Number(ethers.formatUnits(balance, 18));
+    const stakeValue = (balanceValue * percent) / 100;
 
     const input = $("stake-amount");
-
-    if (input) {
-      input.value = stakeValue.toFixed(6);
-    }
+    if (input) input.value = stakeValue.toFixed(6);
 
     await updateApprovalStatus();
-
   } catch (error) {
     console.error(error);
   }
@@ -604,13 +580,10 @@ async function approveInfl() {
     );
 
     setStatus("Waiting for approval confirmation...");
-
     await tx.wait();
 
     setStatus("Approval confirmed.");
-
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Approval failed.");
@@ -627,13 +600,10 @@ async function stakeInfl() {
     const tx = await vault.stake(amount);
 
     setStatus("Waiting for stake confirmation...");
-
     await tx.wait();
 
     setStatus("Stake confirmed.");
-
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Stake failed.");
@@ -649,13 +619,10 @@ async function claimRewards() {
     const tx = await vault.claimRewards();
 
     setStatus("Waiting for claim confirmation...");
-
     await tx.wait();
 
     setStatus("Rewards claimed.");
-
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Claim failed.");
@@ -672,13 +639,10 @@ async function withdrawInfl() {
     const tx = await vault.withdraw(amount);
 
     setStatus("Waiting for withdrawal confirmation...");
-
     await tx.wait();
 
     setStatus("Withdrawal confirmed.");
-
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Withdrawal failed.");
@@ -686,7 +650,6 @@ async function withdrawInfl() {
 }
 
 async function exitStaking() {
-
   const confirmed = window.confirm(
     "Exit all staking? This withdraws your stake and claims rewards."
   );
@@ -704,13 +667,10 @@ async function exitStaking() {
     const tx = await vault.exit();
 
     setStatus("Waiting for exit confirmation...");
-
     await tx.wait();
 
     setStatus("Exit confirmed.");
-
     await refreshStakingUi();
-
   } catch (error) {
     console.error(error);
     setStatus(error.shortMessage || error.message || "Exit failed.");
@@ -718,19 +678,15 @@ async function exitStaking() {
 }
 
 function initStarfield() {
-
   const canvas = $("starfield");
-
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
-
   if (!ctx) return;
 
   let stars = [];
 
   function resize() {
-
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -744,16 +700,9 @@ function initStarfield() {
   }
 
   function draw() {
-
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (const star of stars) {
-
       ctx.beginPath();
 
       ctx.arc(
@@ -764,9 +713,7 @@ function initStarfield() {
         Math.PI * 2
       );
 
-      ctx.fillStyle =
-        `rgba(255,255,255,${star.o})`;
-
+      ctx.fillStyle = `rgba(255,255,255,${star.o})`;
       ctx.fill();
 
       star.y -= star.s;
@@ -781,11 +728,6 @@ function initStarfield() {
   }
 
   resize();
-
-  window.addEventListener(
-    "resize",
-    resize
-  );
-
+  window.addEventListener("resize", resize);
   draw();
 }
