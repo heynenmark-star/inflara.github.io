@@ -17,10 +17,10 @@ const APP_CONFIG = {
     }
   ],
 
-  contracts: {
-    infl: "0x393289f921bbE6A684B79B9939816AAE68AC1B60",
-    stakingVault: "0x1EEC97996986B5D0196a68D341D0C2D2C6D1775B"
-  }
+ contracts: {
+  infl: "0x760DBA2C6657838F67cC98114F03c82238B3DC68",
+  stakingVault: "0x462DD81aF25f5408A63899c75Bd15337B840675B"
+}
 };
 
 const ABI = {
