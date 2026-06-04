@@ -203,16 +203,19 @@
   </footer>
 
   <script>
-    const LIVE_CONFIG = {
-      rpc: "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_",
-      infl: "0x393289f921bbE6A684B79B9939816AAE68AC1B60",
-      engine: "0x8a00327e3631B2e63B320c1E107055fd9fd15f40",
-      controller: "0x30481Cc7D7A0F437dec661e36b0a5394F74bBe62",
-      treasury: "0x45Aaae335Dcc739638573aFd398077EF326591Bf",
-      stakingVault: "0x1EEC97996986B5D0196a68D341D0C2D2C6D1775B",
-      founderVesting: "0x1337C20D2eB0336c2a2dDB32F4CaeC00d90D296a",
-      protocolSafe: "0x7E267b43b11e312A4685Bb48Ab2B10c43dA1Ef1E"
-    };
+const LIVE_CONFIG = {
+  rpc: "https://eth-sepolia.g.alchemy.com/v2/SAnXKYhqMQWm0eYNvuPv_",
+
+  infl: "0x760DBA2C6657838F67cC98114F03c82238B3DC68",
+  engine: "0x1715615D946B827220FD69EBBf84eF35F7c3CcE6",
+  controller: "0xa7df5BEC25B434a2A40a6Da5a202ddD884Ef0590",
+  treasury: "0xbF63C68f03710a90Ffc6633D6EDd2ff214bDdfE3",
+  stakingVault: "0x462DD81aF25f5408A63899c75Bd15337B840675B",
+
+  founderVesting: "0x0000000000000000000000000000000000000000",
+
+  protocolSafe: "0x7E267b43b11e312A4685Bb48Ab2B10c43dA1Ef1E"
+};
 
     const tokenABI = [
       "function totalSupply() view returns (uint256)",
