@@ -2,7 +2,7 @@ const APP_CONFIG = {
   chainIdHex: "0xaa36a7",
   chainName: "Ethereum Sepolia",
 
-  expectedWallet: "0x25bEE48761A8dDA1a05516cf85539f048eA5e969",
+  expectedWallet: null,
 
   rpcs: [
     {
@@ -90,10 +90,6 @@ function shortAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function sameAddress(a, b) {
-  return String(a || "").toLowerCase() === String(b || "").toLowerCase();
-}
-
 function getWalletProvider() {
   if (!window.ethereum) return null;
 
@@ -151,13 +147,13 @@ function updateRewardMetricsDisplay(userStakeRaw, totalStakeRaw) {
       : 0;
 
   setText("estimated-apr", `${apr.toFixed(2)}%`);
-  setText("daily-reward-estimate", `${dailyRewards.toFixed(3)} INFL`);
-  setText("monthly-reward-estimate", `${monthlyRewards.toFixed(2)} INFL`);
+  setText("daily-reward-estimate", `${dailyRewards.toFixed(6)} INFL`);
+  setText("monthly-reward-estimate", `${monthlyRewards.toFixed(6)} INFL`);
   setText("vault-share", `${vaultShare.toFixed(2)}%`);
 
   setText(
     "reward-status-text",
-    userStake > 0 ? "Accumulating" : "Waiting for stake"
+    userStake > 0 ? "Accumulating estimate" : "Waiting for stake"
   );
 }
 
@@ -202,8 +198,8 @@ function bindButtons() {
       setText("wallet-address", userAddress);
       setText("wallet-provider", getWalletName());
 
-      checkExpectedWallet();
       updateWalletButton();
+      setStatus("Wallet changed.");
       await refreshStakingUi();
     });
 
@@ -212,16 +208,6 @@ function bindButtons() {
       await updateNetworkDisplay();
       await refreshStakingUi();
     });
-  }
-}
-
-function checkExpectedWallet() {
-  if (!userAddress) return;
-
-  if (!sameAddress(userAddress, APP_CONFIG.expectedWallet)) {
-    setStatus(
-      `Connected wallet ${shortAddress(userAddress)} is not the expected Rabby staking wallet ${shortAddress(APP_CONFIG.expectedWallet)}.`
-    );
   }
 }
 
@@ -259,12 +245,7 @@ async function connectWallet() {
     await updateNetworkDisplay();
 
     updateWalletButton();
-
-    if (sameAddress(userAddress, APP_CONFIG.expectedWallet)) {
-      setStatus("Expected Rabby staking wallet connected.");
-    } else {
-      checkExpectedWallet();
-    }
+    setStatus("Wallet connected.");
 
     await refreshStakingUi();
   } catch (error) {
