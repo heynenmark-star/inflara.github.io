@@ -19,10 +19,10 @@ const APP_CONFIG = {
     }
   ],
 
-  contracts: {
-    infl: "0x760DBA2C6657838F67cC98114F03c82238B3DC68",
-    stakingVault: "0x462DD81aF25f5408A63899c75Bd15337B840675B"
-  }
+ contracts: {
+  infl: "0x760DBA2C6657838F67cC98114F03c82238B3DC68",
+  stakingVault: "0x462DD81aF25f5408A63899c75Bd15337B840675B"
+}
 };
 
 const ABI = {
@@ -64,8 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateWalletButton();
 
   setText("rpc-provider", "Checking...");
-  setStatus("Phase 1.1 APR-capped staking loaded.");
-
+setStatus("Phase 1.2 daily rewards staking loaded.");
   updateNetworkDisplay();
   refreshStakingUi();
 
