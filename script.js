@@ -19,11 +19,10 @@ const APP_CONFIG = {
     }
   ],
 
- contracts: {
-  infl: "0x760DBA2C6657838F67cC98114F03c82238B3DC68",
-  stakingVault: "0x462DD81aF25f5408A63899c75Bd15337B840675B"
+contracts: {
+  infl: window.INFLARA_CONFIG.token,
+  stakingVault: window.INFLARA_CONFIG.vault
 }
-};
 
 const ABI = {
   token: [
