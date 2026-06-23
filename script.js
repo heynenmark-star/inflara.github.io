@@ -23,7 +23,7 @@ contracts: {
   infl: window.INFLARA_CONFIG.token,
   stakingVault: window.INFLARA_CONFIG.vault
 }
-
+};
 const ABI = {
   token: [
     "function balanceOf(address owner) view returns (uint256)",
