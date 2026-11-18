@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateWalletButton();
 
   setText("rpc-provider", "Checking...");
-  setStatus("Phase 1.2 daily rewards staking loaded.");
+  setStatus("Inflara staking on Arbitrum One loaded.");
   updateNetworkDisplay();
   refreshStakingUi();
 
